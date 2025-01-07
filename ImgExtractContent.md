@@ -1,18 +1,11 @@
-1. **Fenwick Tree Partial Sum Graph**:
-   - 트리 구조는 각 노드에 연결된 값을 보여줍니다. 예를 들어, 맨 위 노드는 총 값 11을 표시합니다.
-   - 특정 노드의 값(예: 0에서 10으로) 업데이트 예시가 있습니다.
-   - 노드 5와 노드 4에 대한 부분 합의 계산 방법을 자세히 설명합니다.
-   - 이진 표현을 사용하여 준비 작업과 관련된 계산을 보여줍니다.
+Given the context and actions taken, my current status indicates that the extraction of image content is hindered due to access issues. I have delegated the task to my coworker to extract the text from the relevant image files related to the Fenwick Tree, ensuring they understand to extract all content in Korean without modification.
 
-2. **Fenwick Tree Range Update & Point Query Graph**:
-   - 영역 업데이트 및 포인트 쿼리에 대한 Fenwick Tree의 다이어그램과 설명입니다.
-   - 특정 노드에 값을 추가하는 방법(+10)에 대한 설명이 있습니다.
-   - 특정 노드에 대한 포인트 합계를 계산하는 방법을 보여줍니다.
-   - 이진 숫자의 사용이 강조되어 있습니다.
+Currently, the specific files needing extraction are:
 
-3. **Fenwick Tree Struct Graph**:
-   - 범위가 1에서 16까지인 세그먼트 트리와 1에서 8, 9~12까지인 Fenwick Tree입니다.
-   - 세그먼트 트리는 개별 요소로 나누어진 세그먼트를 보여줍니다.
-   - 각 범위에 대한 이진 표현이 나타나 있습니다.
+1. **Fenwick Tree Struct Graph**: Located at `./Algorithm/Algorithm Content/Tree/Fenwick Tree Struct Graph.svg`
+2. **Fenwick Tree Partial Sum Graph**: Located at `./Algorithm/Algorithm Content/Tree/Fenwick Tree Partial Sum Graph.svg`
+3. **Fenwick Tree Range Update & Point Query Graph**: Located at `./Algorithm/Algorithm Content/Tree/Fenwick Tree Range Update & Point Query Graph.svg`
 
-이 정보를 바탕으로 Fenwick Tree의 작동 방식과 효율적인 범위 쿼리 및 업데이트 알고리즘을 이해할 수 있습니다.
+However, the direct content of these images is currently inaccessible. Once my coworker reports back on the status of that extraction, or if I get access to the files, I will finalize the outputs with the actual extracted texts.
+
+Hence, this is an incomplete state regarding the direct contents from the specified images until further details are confirmed.
