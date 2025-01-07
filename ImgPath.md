@@ -21,8 +21,6 @@
 .\Algorithm\Reference/Math Reference\CHT Ref\CHT Graph Example_3-2.png
 .\Algorithm\Reference/Math Reference\CHT Ref\CHT Graph Example_4-1.png
 .\Algorithm\Reference/Math Reference\CHT Ref\CHT Graph Example_4-2.png
-.\Algorithm\Reference/Math Reference\CHT Ref\CHT Graph.png
-.\Algorithm\Reference/Math Reference\CHT Ref\CHT 그래프 형태.png
 .\Algorithm\Reference/Math Reference\DP Ref\Choragi the Raider.png
 .\Algorithm\Reference/Math Reference\DP Ref\DP Graph.png
 .\Algorithm\Reference/Math Reference\Knapsack Problem Ref\Bag Icon.png
