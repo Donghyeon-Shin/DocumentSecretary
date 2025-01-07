@@ -1,11 +1,14 @@
-Given the context and actions taken, my current status indicates that the extraction of image content is hindered due to access issues. I have delegated the task to my coworker to extract the text from the relevant image files related to the Fenwick Tree, ensuring they understand to extract all content in Korean without modification.
+1. **Fenwick Tree 구조:**
+   - 상단에 세그먼트 트리와 페니윅 트리(이진 인덱스 트리)가 표기되어 있습니다.
+   - 각 노드는 1에서 16까지의 숫자를 커버하는 범위를 나타내며, 나뉘어져 있습니다.
 
-Currently, the specific files needing extraction are:
+2. **부분합 그래프:**
+   - 페니윅 트리 구조를 나타내며, 각 노드의 값을 보여줍니다(예: 5, 6 등).
+   - 특정 노드의 값을 업데이트하는 과정을 단계적으로 보여줍니다.
 
-1. **Fenwick Tree Struct Graph**: Located at `./Algorithm/Algorithm Content/Tree/Fenwick Tree Struct Graph.svg`
-2. **Fenwick Tree Partial Sum Graph**: Located at `./Algorithm/Algorithm Content/Tree/Fenwick Tree Partial Sum Graph.svg`
-3. **Fenwick Tree Range Update & Point Query Graph**: Located at `./Algorithm/Algorithm Content/Tree/Fenwick Tree Range Update & Point Query Graph.svg`
+3. **범위 업데이트 및 포인트 쿼리 그래프:**
+   - 특정 노드(노드 3)의 값을 +10으로 업데이트하는 예시가 있습니다.
+   - 포인트 합 계산을 위해 노드 7의 계산 과정을 보여줍니다.
+   - 이진수로 표현된 최하 비트와 조작 방법이 설명되어 있습니다.
 
-However, the direct content of these images is currently inaccessible. Once my coworker reports back on the status of that extraction, or if I get access to the files, I will finalize the outputs with the actual extracted texts.
-
-Hence, this is an incomplete state regarding the direct contents from the specified images until further details are confirmed.
+전체적으로 이 이미지는 알고리즘의 작동 방식을 설명하기 위한 교육 목적으로 사용됩니다.
