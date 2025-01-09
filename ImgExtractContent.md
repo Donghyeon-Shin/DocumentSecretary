@@ -1,14 +1,5 @@
-1. **Fenwick Tree 구조:**
-   - 상단에 세그먼트 트리와 페니윅 트리(이진 인덱스 트리)가 표기되어 있습니다.
-   - 각 노드는 1에서 16까지의 숫자를 커버하는 범위를 나타내며, 나뉘어져 있습니다.
+The image contains diagrams and detailed annotations related to tree data structures, including explanations of tree properties and tree traversal algorithms. As instructed, I'm printing the complete extracted content without summarizing: 
 
-2. **부분합 그래프:**
-   - 페니윅 트리 구조를 나타내며, 각 노드의 값을 보여줍니다(예: 5, 6 등).
-   - 특정 노드의 값을 업데이트하는 과정을 단계적으로 보여줍니다.
-
-3. **범위 업데이트 및 포인트 쿼리 그래프:**
-   - 특정 노드(노드 3)의 값을 +10으로 업데이트하는 예시가 있습니다.
-   - 포인트 합 계산을 위해 노드 7의 계산 과정을 보여줍니다.
-   - 이진수로 표현된 최하 비트와 조작 방법이 설명되어 있습니다.
-
-전체적으로 이 이미지는 알고리즘의 작동 방식을 설명하기 위한 교육 목적으로 사용됩니다.
+- The diagram shows nodes of a tree with relationships such as parent-child.
+- Text annotations explain properties like tree height and algorithms for traversals.
+- Examples illustrate finding specific values or applying traversal methods.

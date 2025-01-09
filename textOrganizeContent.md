@@ -1,105 +1,30 @@
 Main file
-- file name: Fenwick Tree.md
-- concept: 
-  - `Binary Indexed Tree(BIT)`로 알려져 있으며, 후계 구간의 합을 효율적으로 계산하는 자료구조이다.
-  - 시간복잡도는 `O(logN)`이고 공간복잡도는 `O(N)`으로 Segment Tree보다 적은 메모리를 소모한다.
-- principle: 
-  - Fenwick Tree는 최하위 비트를 이용하여 구간의 합을 구한다. 특정 비트(i)에 대해 최하위 비트를 구하는 것은 `i & -i`로 수행한다.
-  - `sum(idx)`와 `update(idx, val)`의 두 가지 주요 연산을 지원한다.
-- example: 
-  ```cpp
-  // Fenwick Tree 구현 예시 코드
-  #include <bits/stdc++.h>
-  using namespace std;
-  int n, q, fenwickTree[100001];
-  
-  void fenwickTree_Update(int idx, int val) {
-      while (idx <= n) {
-          fenwickTree[idx] += val;
-          idx += (idx & -idx);
-      }
-  }
-  
-  int fenwickTree_Sum(int idx) {
-      int result = 0;
-      while (idx > 0) {
-          result += fenwickTree[idx];
-          idx -= (idx & -idx);
-      }
-      return result;
-  }
-  ```
+- file name: HLD(Heavy Light Decomposition).md
+- concept: Tree의 Edge를 'Heavy Edge'와 'Light Edge'로 나누어 구분하는 알고리즘이다. 부모 Node와 자식 Node를 잇는 Edge의 크기에 따라 Edge를 분류하여 구간의 Edge를 효율적으로 관리한다.
+- principle: Edge를 각각 Heavy Edge와 Light Edge로 나누는 것이며, 이어지는 Heavy Edge를 하나의 그룹으로 보고, 이 그룹의 구간을 정의하여 효율적인 구간 계산을 진행한다.
+- example:
+  - `O(N)`의 시간복잡도를 가지는 DFS를 이용하여 Edge를 분류
+  - ETT(Euler Tour Technique)와 Segment Tree를 이용하여 구간 계산을 빠르게 처리
+  - [[13510 - 트리와 쿼리 1]] 문제에서 적용 예시
 
 Related files
+
 file 1
-- file name: Segment Tree.md
-- concept: 
-  - Node 값을 가진 이진 Tree로 배열의 범위를 처리하며, 구간의 합, 차, 곱을 계산하는 자료구조이다.
-  - 시간복잡도는 `O(logN)`이다.
-- Content associated with the main file: 
-  - Segment Tree는 root에서 시작하여 각 노드가 배열 범위의 정보를 보유한다.
-  - 필요한 주요 기능은 `init()`, `update()`, `calculation()`이 있다.
-- example:
-  ```cpp
-  // Segment Tree 구현 예시 코드
-  #include <bits/stdc++.h>
-  using namespace std;
-  typedef long long LL;
-  
-  int n, m, k;
-  LL arr[1000001];
-  vector<LL> segmentTree;
-  
-  LL tree_Init(int node, int start, int end) {
-      if (start == end) return segmentTree[node] = arr[start];
-      int mid = (start + end) / 2;
-      return segmentTree[node] = tree_Init(node * 2, start, mid) + tree_Init(node * 2 + 1, mid + 1, end);
-  }
-  ```
+- file name: DFS(Depth-First Search).md
+- concept: 노드 탐색 방법 중 하나로, 하나의 Branch씩 탐색하기 때문에 보통 재귀를 이용해 구현된다.
+- content associated with the main file: DFS가 HLD의 Heavy Edge와 Light Edge를 나누는 데 사용되며, `O(N)`의 시간복잡도로 Sub Tree 크기를 계산하는 데 핵심적인 역할을 한다.
 
 file 2
-- file name: Lazy Segment Tree.md
-- concept:
-  - Segment Tree의 구간 변화 처리를 미루는 방법으로, Lazy에 의해 업데이트를 지연시킨다.
-  - 시간복잡도는 `O(MlogN)`으로, 범위 업데이트를 효율적으로 처리 가능하다.
-- Content associated with the main file:
-  - `update()`와 `calcultion()`에서 Lazy 동작을 통해 리프노드가 아닐 경우 업데이트를 수행하지 않을 수 있다.
-- example:
-  ```cpp
-  // Lazy Segment Tree 구현 예시 코드
-  #include <bits/stdc++.h>
-  using namespace std;
-  
-  int n, m, k;
-  long long arr[1000001];
-  vector<long long> segment_Tree, lazy;
-  
-  long long init(int node, int start, int end) {
-      if (start == end) return segment_Tree[node] = arr[start];
-      int mid = (start + end) / 2;
-      return segment_Tree[node] = init(node*2, start, mid) + init(node*2 + 1, mid + 1, end);
-  }
-  ```
+- file name: Segment Tree.md
+- concept: Node 값에 배열의 범위를 가진 이진 Tree 구조로 주로 배열의 범위 구간의 합, 차, 곱을 계산하는 데 사용된다.
+- content associated with the main file: 각 나누어진 Edge들의 구간 계산에 Segment Tree가 사용되며, HLD의 구간 계산 최적화에 중요한 요소로 작용한다.
 
 file 3
 - file name: ETT(Euler Tour Technique).md
-- concept:
-  - 트리 기반 문제에서 노드를 선형 배열로 변환하여 구간 쿼리를 지원하는 기법이다.
-  - 시간 및 공간 효율성이 높고 Lazy Segment Tree와 결합하여 사용할 수 있다.
-- Content associated with the main file:
-  - 주로 이분 탐색과 조합되어 사용하며 Tree의 높이를 줄이는 방식으로 노드를 관리한다.
-- example:
-  ```cpp
-  // ETT 기본 구조 예시 코드
-  #include <bits/stdc++.h>
-  using namespace std;
-  
-  void eulerTour(int node, vector<int>& eulerArr) {
-      // 방문한 노드를 eulerArr에 추가
-      eulerArr.push_back(node);
-      // 각 자식 노드에 대해 재귀 호출
-      for (auto child : tree[node]) {
-          eulerTour(child, eulerArr);
-      }
-  }
-  ```
+- concept: 특정 노드의 하위 또는 상위 Node에 대한 쿼리를 처리하기 위해 DFS를 사용하여 Tree의 서브 트리 구간을 List 형태로 변환하는 기법이다.
+- content associated with the main file: ETT를 통해 정의된 구간을 바탕으로 HLD의 구현에서 각 Node의 구간을 설정하고, 구간 계산에 ETT로 정의된 값을 사용한다.
+
+file 4
+- file name: LCA(Lowest Common Ancestor).md
+- concept: 주어진 Tree 안에서 두 노드의 최소 공통 조상을 찾는 알고리즘으로, DP를 이용한 효율적인 탐색이 가능하다.
+- content associated with the main file: HLD와 LCA는 서로 다른 문제를 해결하기 위한 알고리즘으로, HLD 구현 시 [[LCA]]를 사용하여 노드의 조상을 찾을 수 있으나, 코드를 복잡하게 만들어 선호하지 않는 방식으로 언급되었다.
