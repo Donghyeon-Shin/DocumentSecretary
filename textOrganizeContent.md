@@ -1,30 +1,31 @@
 Main file
-- file name: HLD(Heavy Light Decomposition).md
-- concept: Tree의 Edge를 'Heavy Edge'와 'Light Edge'로 나누어 구분하는 알고리즘이다. 부모 Node와 자식 Node를 잇는 Edge의 크기에 따라 Edge를 분류하여 구간의 Edge를 효율적으로 관리한다.
-- principle: Edge를 각각 Heavy Edge와 Light Edge로 나누는 것이며, 이어지는 Heavy Edge를 하나의 그룹으로 보고, 이 그룹의 구간을 정의하여 효율적인 구간 계산을 진행한다.
-- example:
-  - `O(N)`의 시간복잡도를 가지는 DFS를 이용하여 Edge를 분류
-  - ETT(Euler Tour Technique)와 Segment Tree를 이용하여 구간 계산을 빠르게 처리
-  - [[13510 - 트리와 쿼리 1]] 문제에서 적용 예시
+- file name: Fenwick Tree.md
+- concept: Binary Indexed Tree(BIT)로 구간의 합을 빠르게 구할 수 있는 자료구조로, 공간복잡도가 Segment Tree보다 적다.
+- principle: 특정 구간의 합이나 포인트 쿼리를 빠르게 계산할 수 있도록 구간의 최하위 비트만을 활용한 트리의 구조를 가진다.
+- example: 구간합, 포인트 쿼리 등을 이용한 Fenwick Tree 구조, 예제 코드와 함께 제공하며, 다양한 활용 코드 포함.
 
 Related files
-
 file 1
-- file name: DFS(Depth-First Search).md
-- concept: 노드 탐색 방법 중 하나로, 하나의 Branch씩 탐색하기 때문에 보통 재귀를 이용해 구현된다.
-- content associated with the main file: DFS가 HLD의 Heavy Edge와 Light Edge를 나누는 데 사용되며, `O(N)`의 시간복잡도로 Sub Tree 크기를 계산하는 데 핵심적인 역할을 한다.
+- file name: Segment Tree.md
+- concept: 이진 트리 구조로 배열의 특정 범위에 대한 정보를 저장하여 구간의 합, 차 등을 빠르게 계산하는데 사용된다.
+- content associated with the main file: Segment Tree와 비교하여 Fenwick Tree의 구조적 차이를 설명하고, 각각의 시간, 공간 복잡도 측면에서의 장단점을 분석.
 
 file 2
-- file name: Segment Tree.md
-- concept: Node 값에 배열의 범위를 가진 이진 Tree 구조로 주로 배열의 범위 구간의 합, 차, 곱을 계산하는 데 사용된다.
-- content associated with the main file: 각 나누어진 Edge들의 구간 계산에 Segment Tree가 사용되며, HLD의 구간 계산 최적화에 중요한 요소로 작용한다.
+- file name: Lazy Segment Tree.md
+- concept: Segment Tree의 개선된 버전으로, 게으른 업데이트를 적용하여 필요한 시점에만 구간 갱신을 수행하는 방식이다.
+- content associated with the main file: Fenwick Tree와 마찬가지로 구간에 대한 효율적 업데이트 방식을 제공하나, 게으른 평가 기법을 활용하여 대량의 데이터 업데이트 시 효율적이다.
 
 file 3
-- file name: ETT(Euler Tour Technique).md
-- concept: 특정 노드의 하위 또는 상위 Node에 대한 쿼리를 처리하기 위해 DFS를 사용하여 Tree의 서브 트리 구간을 List 형태로 변환하는 기법이다.
-- content associated with the main file: ETT를 통해 정의된 구간을 바탕으로 HLD의 구현에서 각 Node의 구간을 설정하고, 구간 계산에 ETT로 정의된 값을 사용한다.
+- file name: MST(Minimum Spanning Tree).md
+- concept: 그래프에서 모든 노드를 연결하면서, 간선의 총 비용이 최소가 되는 신장 트리를 찾는 알고리즘.
+- content associated with the main file: Fenwick Tree는 특정 연결성 및 크기를 가지는 트리로써 MST 알고리즘의 그래프 연산 형태와 응용이 가능.
 
 file 4
-- file name: LCA(Lowest Common Ancestor).md
-- concept: 주어진 Tree 안에서 두 노드의 최소 공통 조상을 찾는 알고리즘으로, DP를 이용한 효율적인 탐색이 가능하다.
-- content associated with the main file: HLD와 LCA는 서로 다른 문제를 해결하기 위한 알고리즘으로, HLD 구현 시 [[LCA]]를 사용하여 노드의 조상을 찾을 수 있으나, 코드를 복잡하게 만들어 선호하지 않는 방식으로 언급되었다.
+- file name: Union Find.md
+- concept: Disjoint Set을 표현하는 자료 구조로, 집합간의 합치기 및 포함 여부를 찾는 연산을 효율적으로 지원.
+- content associated with the main file: Fenwick Tree와의 직접적 연관보다는 보다 큰 그래프 구조에서의 노드 연결과 집합 연산에서 간접적으로 관련.
+
+file 5
+- file name: DP(Dynamic Programming).md
+- concept: 동일 문제의 반복을 피하며, 작은 문제의 결과들을 활용해 큰 문제를 해결하는 최적화 기법.
+- content associated with the main file: Fenwick Tree도 특정 최적화 문제에서 효율적 해답을 찾을 수 있으나, DP와는 문제 접근 방식에서 근본적 차이 존재.

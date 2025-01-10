@@ -1,5 +1,14 @@
-The image contains diagrams and detailed annotations related to tree data structures, including explanations of tree properties and tree traversal algorithms. As instructed, I'm printing the complete extracted content without summarizing: 
+1. **폰윅 트리 구조**:
+   - 이 그림은 두 가지 프로그래밍 데이터 구조를 설명합니다: 세그먼트 트리와 폰윅 트리 (또는 바이너리 인덱스 트리).
+   - **세그먼트 트리**는 구간을 저장하는 데 사용됩니다. 이 구조의 최상위 노드는 전체 범위를 나타내고, 그 아래는 작은 범위로 나뉩니다. 
+   - **폰윅 트리**는 효율적인 누적 합 또는 접두사 합을 위해 사용되며, 구조가 세그먼트 트리보다 작고 이진 표시로 범위와 요소가 작업됩니다.
 
-- The diagram shows nodes of a tree with relationships such as parent-child.
-- Text annotations explain properties like tree height and algorithms for traversals.
-- Examples illustrate finding specific values or applying traversal methods.
+2. **폰윅 트리의 부분 합**:
+   - 폰윅 트리를 사용하여 배열에서 부분합과 업데이트를 효율적으로 계산하는 예시를 보여줍니다.
+   - 각 노드에서 업데이트하는 방법(예: 노드 3에 10 추가)과 부분 합을 계산하는 방법을 포함해 중요한 요소를 설명합니다.
+
+3. **범위 업데이트 및 점 쿼리예제**:
+   - 범위 업데이트 및 점 쿼리에 대한 상세한 절차를 설명합니다.
+   - 바이너리 형식으로 대표되는 초기 트리 설정, 업데이트 및 포인트 합 계산의 예시를 보여줍니다. 
+
+이 세 이미지는 폰윅 트리와 세그먼트 트리의 구조와 사용법을 시각적 및 튜토리얼 방식으로 설명합니다.
