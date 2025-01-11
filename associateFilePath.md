@@ -1,10 +1,9 @@
 {
-  "mainFile": "./Algorithm/Algorithm Content/Tree/Fenwick Tree.md",
+  "mainFile": "./Algorithm/Algorithm Content/Tree/Segment Tree.md",
   "relatedFiles": [
     "./Algorithm/Algorithm Content/Tree/Segment Tree.md",
-    "./Algorithm/Algorithm Content/Tree/Lazy Segment Tree.md",
-    "./Algorithm/Algorithm Content/Tree/ETT(Euler Tour Technique).md",
-    "./Algorithm/Algorithm Content/Graph Theory/PBS(Parallel Binary Search).md"
+    "./Algorithm/Algorithm Content/Array/PBS(Parallel Binary Search).md",
+    "./Algorithm/Algorithm Content/Tree/Lazy Segment Tree.md"
   ],
   "imageFiles": [
     "./Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Struct Graph.png",
