@@ -1,0 +1,31 @@
+.cm-s-obsidian span.cm-hmd-internal-link {
+  font-weight: 400;
+  color: var(--linkpink)  !important;
+}
+
+.markdown-preview-view .internal-link {
+  font-weight: 400;
+  text-decoration: none;
+  color: white;
+}
+
+.markdown-preview-view .internal-link:hover {
+  font-weight: 400;
+  color: gray;
+}
+
+.cm-s-obsidian span.cm-hmd-external-link {
+  font-weight: 400;
+  color: var(--linkpink)  !important;
+}
+
+.markdown-preview-view .external-link {
+  font-weight: 400;
+  text-decoration: none;
+  color: white;
+}
+
+.markdown-preview-view .external-link:hover {
+  font-weight: 400;
+  color: gray;
+}

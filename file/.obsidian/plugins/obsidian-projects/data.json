@@ -1,0 +1,95 @@
+{
+  "version": 2,
+  "projects": [
+    {
+      "fieldConfig": {
+        "status": {
+          "options": [
+            "하려고 하고 있는 일들",
+            "하고 있는 일들",
+            "완료🥂"
+          ]
+        }
+      },
+      "defaultName": "",
+      "templates": [],
+      "excludedNotes": [],
+      "isDefault": false,
+      "dataSource": {
+        "kind": "folder",
+        "config": {
+          "path": "Project/Obsidian Writing",
+          "recursive": true
+        }
+      },
+      "newNotesFolder": "",
+      "views": [
+        {
+          "config": {},
+          "filter": {
+            "conjunction": "and",
+            "conditions": []
+          },
+          "colors": {
+            "conditions": []
+          },
+          "sort": {
+            "criteria": []
+          },
+          "id": "908dcff0-1090-421a-b8bc-eab0a560e2ee",
+          "name": "Table",
+          "type": "table"
+        },
+        {
+          "config": {
+            "groupByField": "status",
+            "columns": {
+              "하려고 하고 있는 일들": {
+                "weight": 0
+              },
+              "하고 있는 일들": {
+                "weight": 1,
+                "records": [
+                  "Project/Obsidian Writing/제곱근분할법.md"
+                ]
+              },
+              "완료🥂": {
+                "weight": 2,
+                "records": [
+                  "Project/Obsidian Writing/Algorithms.md"
+                ]
+              }
+            }
+          },
+          "filter": {
+            "conjunction": "and",
+            "conditions": []
+          },
+          "colors": {
+            "conditions": []
+          },
+          "sort": {
+            "criteria": []
+          },
+          "id": "9330f6cd-c4bc-4767-a4a9-fccdfe69fcae",
+          "name": "Issue tracker",
+          "type": "board"
+        }
+      ],
+      "id": "43a650fd-f68f-4094-a369-7566087e626a",
+      "name": "Obsidian"
+    }
+  ],
+  "archives": [],
+  "preferences": {
+    "projectSizeLimit": 1000,
+    "frontmatter": {
+      "quoteStrings": "PLAIN"
+    },
+    "locale": {
+      "firstDayOfWeek": "default"
+    },
+    "commands": [],
+    "linkBehavior": "open-editor"
+  }
+}

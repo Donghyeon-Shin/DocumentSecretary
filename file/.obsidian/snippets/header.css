@@ -1,0 +1,10 @@
+h1 { color: blue; }  
+h2 { color: red; }
+.cm-header-3 { color: cyan; }
+.cm-header-4 { color: cyan; }
+.cm-header-5 { color: white; font-weight:normal; font-size: medium; }
+.markdown-preview-view h1 { border-bottom: 2px solid var(--background-modifier-border); padding-bottom: 0.5em;}
+.markdown-preview-view h2 { border-bottom: 2px solid var(--background-modifier-border); padding-bottom: 0.5em;}
+.markdown-preview-view h3 { color: cyan; }
+.markdown-preview-view h4 { color: cyan; }
+.markdown-preview-view h5 { color: white; font-weight:normal; font-size: medium; }

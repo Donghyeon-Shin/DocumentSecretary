@@ -1,0 +1,11 @@
+.graph-view.color-fill-highlight {
+	color: #000000;
+}
+
+.graph-view.color-line-highlight {
+	color: #FFFFFF;
+}
+
+.graph-view.color-fill-focused {
+	color : #FFFF00;
+}

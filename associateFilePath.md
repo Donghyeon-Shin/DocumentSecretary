@@ -1,11 +1,9 @@
 {
-  "mainFile": "./Algorithm/Algorithm Content/Tree/HLD(Heavy Light Decomposition).md",
+  "mainFile": "./Study/LangChain/LangChain Content/02_Model IO/Output Parser.md",
   "relatedFiles": [
-    "./Algorithm/Algorithm Content/Graph Theory/DFS(Depth-First Search).md",
-    "./Algorithm/Algorithm Content/Tree/ETT(Euler Tour Technique).md",
-    "./Algorithm/Algorithm Content/Tree/Segment Tree.md"
+    "./Study/LangChain/LangChain Content/02_Model IO/Prompt.md"
   ],
   "imageFiles": [
-    "./Algorithm/Reference/Tree Reference/HLD Ref/HLD Graph.png"
+    "./Study/LangChain/LangChain Content/02_Model IO/Expression language Input and Output.png"
   ]
 }

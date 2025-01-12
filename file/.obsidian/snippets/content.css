@@ -1,0 +1,10 @@
+.markdown-preview-sizer.markdown-preview-section {
+  max-width: 80% !important;
+  width: 100% !important;
+  margin-left: 10%;
+  margin-right: 10%;
+}
+
+.full-width .markdown-preview-section {
+	max-width: 100% !important;
+}

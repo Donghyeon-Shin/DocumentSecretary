@@ -1,0 +1,13 @@
+{
+  "accentColor": "",
+  "theme": "obsidian",
+  "cssTheme": "Things",
+  "enabledCssSnippets": [
+    "header",
+    "link",
+    "graph view",
+    "publish",
+    "table",
+    "content"
+  ]
+}

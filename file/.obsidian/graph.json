@@ -1,0 +1,72 @@
+{
+  "collapse-filter": false,
+  "search": "",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": false,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "path:Study/Algorithm/Reference  ",
+      "color": {
+        "a": 1,
+        "rgb": 7770879
+      }
+    },
+    {
+      "query": "path:\"Study/Algorithm/Algorithm Content\"  ",
+      "color": {
+        "a": 1,
+        "rgb": 11260666
+      }
+    },
+    {
+      "query": "file:Algorithm Introdution",
+      "color": {
+        "a": 1,
+        "rgb": 595264
+      }
+    },
+    {
+      "query": "path:\"Study/Book/Book Content\"  ",
+      "color": {
+        "a": 1,
+        "rgb": 13994351
+      }
+    },
+    {
+      "query": "file:Book Introduction",
+      "color": {
+        "a": 1,
+        "rgb": 14333829
+      }
+    },
+    {
+      "query": "file:LangChain Introduction",
+      "color": {
+        "a": 1,
+        "rgb": 16771219
+      }
+    },
+    {
+      "query": "path:\"Study/LangChain/LangChain Content\"  ",
+      "color": {
+        "a": 1,
+        "rgb": 16580545
+      }
+    }
+  ],
+  "collapse-display": false,
+  "showArrow": true,
+  "textFadeMultiplier": -0.1,
+  "nodeSizeMultiplier": 1.35052083333333,
+  "lineSizeMultiplier": 1,
+  "collapse-forces": true,
+  "centerStrength": 0.518713248970312,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 0.321336386050393,
+  "close": true
+}
