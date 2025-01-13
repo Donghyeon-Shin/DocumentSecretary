@@ -12,14 +12,29 @@ def run_docPathCrew(file, extension_name):
     return docPathCrewResult
 
 
+@st.cache_data(
+    show_spinner="지정된 경로에 있는 모든 이미지 파일을 불러오고 있습니다..."
+)
+def run_imgPathCrew(file):
+    imgPathCrewResult = crews.run_imgPathSearch(img_path="./file")
+    return imgPathCrewResult
+
+
 @st.cache_data(show_spinner="불러온 파일 중 키워드에 맞는 파일들을 찾고 있습니다...")
-def run_fileSelectCrew(file, extension_name, keyward, docPaths):
+def run_fileSelectCrew(
+    file, extension_name, keyward, docPathCrewResult, imgPathCrewResult
+):
     docPaths = []
+    imgPaths = []
     for docPath in docPathCrewResult["filePaths"]:
         if os.path.splitext(docPath)[1] == extension_name:
             docPaths.append(docPath)
 
-    fileSelectCrewResult = crews.run_fileSelect(keyward, docPaths)
+    for imgPath in imgPathCrewResult["filePaths"]:
+        if os.path.splitext(imgPath)[1] != ".svg":
+            imgPaths.append(imgPath)
+
+    fileSelectCrewResult = crews.run_fileSelect(keyward, docPaths, imgPaths)
     return fileSelectCrewResult
 
 
@@ -95,7 +110,10 @@ if st.session_state["isSuccessFile"]:
                     # 파일 경로 Load
                     docPathCrewResult = run_docPathCrew(file, extension_name)
                     st.write("모든 파일을 불러왔습니다.")
-                    if docPathCrewResult == "Error":
+
+                    imgPathCrewResult = run_imgPathCrew(file)
+                    st.write("모든 이미지를 불러왔습니다.")
+                    if docPathCrewResult == "Error" or imgPathCrewResult == "Error":
                         status.update(
                             label="파일을 불러오는데 오류가 발생했습니다.",
                             expanded=False,
@@ -104,7 +122,11 @@ if st.session_state["isSuccessFile"]:
                     else:
                         # 키워드에 맞는 관련 파일 찾기
                         fileSelectCrewResult = run_fileSelectCrew(
-                            file, extension_name, keyward, docPathCrewResult
+                            file,
+                            extension_name,
+                            keyward,
+                            docPathCrewResult,
+                            imgPathCrewResult,
                         )
                         st.write("키워드에 맞는 파일들을 모두 찾았습니다.")
                         if fileSelectCrewResult == "Error":

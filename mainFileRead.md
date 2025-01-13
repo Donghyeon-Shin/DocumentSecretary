@@ -1,287 +1,357 @@
-```markdown
-# Detail ( Common )
-- `file`을 입력 받거나 `Wikipedia`에서 검색한 값을 바탕으로 Quiz을 만들어 출력해주는 `site`이다.
-- Streamlit의 `sidebar`에 `file upload`와 `Wikipedia` 검색 기능을 구현하였다.
-- `file upload`는 [[Document GPT]]와 동일한 기능이 사용하고 `Wikipedia`의 경우는 [[WikipediaRetriever]]을 사용하였다.
-- `file upload`와 `Wikipedia` 모두 값이 변하지 않는 이상 초기화 할 필요가 없기 때문에 `@st.cache`을 사용한다.
-- `Chain`을 만드는 과정 또한 `file upload`와 `Wikipedia`에서 얻은 값(`docs`)이 바뀌지 않는다면 초기화 할 필요가 없기 때문에 `@st.cache`을 이용한다. 하지만 `docs`이 hash 할 수 없는 값이기 때문에 따로 `hash`할 수 있는 값을 포함하여 function을 구성해야 한다. (자세한 내용은 [[Streamlit]] 참고)
-- Streamlit의 `form`을 이용하여 `Chain`을 통해 얻은 `json 값`을 바탕으로 quiz UI를 구현하였고 `success`와 `error` Widgit을 활용하여 `Submit Button`을 누를 시,  정답 유/무가 나오도록 구현하였다.
+# Detail
+- [[Site Loader]]를 활용하여 `Site`의 정보를 가저와 그 정보를 바탕으로 질문에 답변을 해주는 출력해주는 Page이다.
+- 기본 UI는 [[Document GPT]]와 유사하게 구현하였다.
+- LLM은 크게 두 가지로 구성하였다.
+	- `History Model` : [[Stuff LCEL Chain]]을 바탕으로 하여 User의 `Question`과 `Histroy`(AI와 user의 Message)를 받은 뒤, 해당 `Question`이 예전의 존재하였다면 해당 답변을 그대로 출력하고 존재하지 않았다면 `None`을 출력해주는 `Model`
+	- `Research Model` : [[Map Re-rank LCEL Chain]]을 바탕으로 하여 Retriever에서 User의 `Question`에 알맞은 답변을 찾아 출력해주는 `Model`
+- `Memory`, `Message`, `Chain` 등 여러 기능들을 쉽게 관리하기 위해 각각을 **package 분할**하였다.
+	- `SiteGPT.py` : `SiteGPT`의 메인 Page를 UI을 구성하여 출력하는 file
+	- `Utils.py` : User와 AI의 대화를 출력하고 기록하는 함수들을 모아놓은 package
+	- `Data_process.py` :  [[Site Loader]]로 데이터를 받거나 해당 데이터를 전처리하는 함수들을 모아놓은 package
+	- `Chain.py` : `LLM`, `Memory` 관련된 모든 기능들의 함수들을 모아놓은 package
 # Code
-#### Two chains and json output_parser Ver.
-- `questions_chain`을 이용하여 `input docs`를 바탕으로 Quiz 형식의 `output`을 받는다.
-- 그 값을 `formatting_chain`을 넣어 json 형식의 `string` 값으로 변환 시킨다.
-- 마지막으로 string으로 된 값을 `OutputParser`을 이용하여 `json` 형식으로 값을 `return` 한다.
-- 모든 과정을 `chain = {"context": questions_chain} | formatting_chain | output_parser`으로 연결 시킨다.
-- `formatting_chain`의 `formatting_prompt`의 경우 `example input`과 `example out`을 넣어 model이 `json` 형식으로 나올 수 있도록 설정할 수 있는데 여기서 `'''json`을 사용하는 이유는 llm에게 일종의 시작점을 알려주는 것이다. 이렇게 하지 않으면 보통 `알겠습니다.` or `기꺼이 하겠습니다.` 같은 말로 시작을 하기 때문에 **json 결과 값**만 얻기 위해 이런 식으로 작성한 것이다. `{{ `을 사용하는 것 또한 `prompt`에서 template variable(`{}`)과 헷갈리게 하고 싶지 않아서 이다.
-- `output_parser`는 결과 값의 일부를 수정(`text = text.replace("```", "").replace("json", "")`)하고 이를 `import json`을 통해 `json` 형식으로 값을 `return`한다.
+#### SiteGPT.py
+- [[Streamlit]]의 `Side bar` Widgit을 활용하여 유저에게 `URL`을 받고 해당 값을 `Data_process.py`에 넘겨 Retreiver을 받는다.
+- Retreiver 값에 유저의 질문을 더하여 `Chain.py` 넘겨 `AI`의 Response을 넘겨 받는다. 
+- 이러한 과정을 거쳐 얻은 Response을 `Utils.py`의 function을 이용해 Site에 출력한다.
+- URL의 값이 없을 때, `Memory` 값과 `Message`이 초기화 되도록 구현하였다.
 ```python
 import streamlit as st
-import json
-from langchain.chat_models import ChatOpenAI
-from langchain.retrievers import WikipediaRetriever
-from langchain.document_loaders import UnstructuredFileLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.prompts import ChatPromptTemplate
-from langchain.callbacks import StreamingStdOutCallbackHandler
-from langchain.schema.runnable import RunnableLambda
-from langchain.schema import BaseOutputParser
-
-class JsonOutputParser(BaseOutputParser):
-    def parse(self, text):
-        text = text.replace("```", "").replace("json", "")
-        return json.loads(text)
-
-output_parser = JsonOutputParser()
+from pages.SiteGPT.utils import paint_message, send_message
+from pages.SiteGPT.data_process import get_retriever_in_website
+from pages.SiteGPT.chain import invoke_chain, initialize_memory
 
 st.set_page_config(
-    page_title="QuizGpt",
+    page_title="Site GPT",
     page_icon="🤣",
 )
 
-st.title("QuizGPT")
+st.title("Site GPT")
 
-llm = ChatOpenAI(
+st.markdown(
+    """
+    Ask questions about the content of a website.
+
+    Start by writing the URL of the website on the sidebar.
+    """
+)
+
+# ex) https://deepmind.google/sitemap.xml
+
+with st.sidebar:
+    url = st.text_input(
+        "Write down a URL",
+        placeholder="https://example.com/sitemap.xml",
+    )
+
+if url:
+    if ".xml" not in url:
+        with st.sidebar:
+            st.error("Please write down a Stiemap URL")
+    else:
+        retriever = get_retriever_in_website(url)
+        send_message(st.session_state["messages"], "How can I help you?", "ai", save=False)
+        paint_message(st.session_state["messages"])
+        question = st.chat_input("Ask any questions in the document!")
+        if question:
+            send_message(st.session_state["messages"], question, "human")
+            invoke_chain(st.session_state["messages"], retriever, question)
+else:
+    st.session_state["messages"] = []
+    initialize_memory()
+```
+#### Utils.py
+- `paint_message` : 기록된 모든 messages을 출력한다.
+- `save_message` : message와 role를 저장한다.
+- `send_message` : message을 출력하고 `Save` 여부에 따라 message를 저장한다.
+```python
+import streamlit as st
+
+def paint_message(messages):
+    for message in messages:
+        send_message(messages, message["message"], message["role"], save=False)
+        
+def save_message(messages, message, role):
+    messages.append({"message": message, "role": role})
+
+def send_message(messages, message, role, save=True):
+    with st.chat_message(role):
+        st.markdown(message)
+        if save:
+            save_message(messages, message, role)
+```
+#### Data_process.py
+- `parse_page` : `SitemapLoader`을 통해 가져온 `Data`의 전처리 과정을 수행한다.
+- `get_retriever_in_website` : `st.cache_resource`을 사용하여 URL이 바뀔 때만 실행하도록 설정하였고, [[Retrieval]]의 전반적인 과정을 수행한다.
+```python
+import streamlit as st
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.document_loaders import SitemapLoader
+from langchain.vectorstores import FAISS
+from langchain.storage import LocalFileStore
+from langchain.embeddings import OpenAIEmbeddings, CacheBackedEmbeddings
+
+def parse_page(soup):
+    header = soup.find("header")
+    footer = soup.find("footer")
+    if header:
+        header.decompose()
+    if footer:
+        footer.decompose()
+    return str(soup.get_text()).replace("\n", " ").replace("\xa0", " ")
+
+@st.cache_resource(show_spinner="Loading website....")
+def get_retriever_in_website(url):
+    splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=1000,
+        chunk_overlap=200,
+    )
+    loader = SitemapLoader(
+        url,
+        parsing_function=parse_page,
+    )
+    loader.requests_per_second = 5
+    docs = loader.load_and_split(text_splitter=splitter)
+    url_name = (
+        str(url).replace("https://", "").replace(".", "").replace("/sitemapxml", "")
+    )
+    cache_dir = LocalFileStore(f"./.cache/Site_embeddings/{url_name}")
+    embedder = OpenAIEmbeddings()
+    cache_embedder = CacheBackedEmbeddings.from_bytes_store(embedder, cache_dir)
+    vector_store = FAISS.from_documents(docs, cache_embedder)
+    return vector_store.as_retriever()
+```
+#### Chain.py
+##### History Model
+- `History Model`은 user와 ai의 대화를 기반으로 user의 질문이 과거의 했던 질문과 비슷한 내용인지를 판단하고 비슷하다면 과거 답변을 그대로 출력하고 비슷한 답변이 없다면 `None`을 출력하도록 설정한 Model이다.
+- 해당 `prompt`에 example을 제시하여 원하는 답변을 얻을 수 있도록 유도하였다. 
+- user와 ai의 대화를 `format_message()` function을 통해 example에 맞게 `전처리`하였고, 마지막에 **유저의 질문이 message에 포함되어 있기 떄문에 이는 포함되지 않게 처리**하였다. (중복 내용 제거)
+- 비슷한 질문에 대해서는 과거 기록을 가져와 그대로 출력 하였지만 비슷한 질문이 없을 시에 처음에는 `None`을 출력하다가 다음부턴 `Answer: None`을 출력하는 문제가 발생했다. 이에 `Prompt`에 `Answer: None`을 출력하지 말라고 명시하였으나, example 때문인지 해당 내용을 듣지 않고 계속 `None`이 아닌 `Answer: None`을 출력하는 문제가 발생하였다.
+- 이를 해결하기 위해서 message가 처음일 때는 `History Model`을 사용하지 않게 하여 `None`을 출력 하지 않게 하거나, `Prompt`의 example을 수정하여 `Answer: None`을 출력하지 않게 하는 등의 수정이 필요할 것 같다.
+##### Research Model
+- History Model에서 값이 `None`이 나온다면 `Research Model`을 실행하여 Retriever에서 User의 질문에 알맞은 답변을 찾아 출력해주는 Model이다.
+- `Research Model`은 `Answers Chain`과 `Choose Chain`으로 구성되어 있으며, 자세한 내용은 [[Map Re-rank LCEL Chain]]을 참고하면 된다.
+- `Choose Chain`에는 [[Memory Modules]](ConversationSummaryBufferMemory) 기능을 추가하여 결과를 출력할 때, 과거의 답변 또한 고려되게 구현하였다.
+- 각각의 Chain들이 `RunnableLambda`로 이어져 있기 때문에 안에 실행되는 `function`의 `Parameter`의 경우는 **`dictionary` or `callable object`** 이어야 한다는 점을 주의해야 한다.
+```python
+import streamlit as st
+from langchain.callbacks.base import BaseCallbackHandler
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
+from langchain.memory import ConversationSummaryBufferMemory
+from pages.SiteGPT.utils import save_message, send_message
+
+class ChatCallbackHandler(BaseCallbackHandler):
+    def __init__(self):
+        self.response = ""
+        
+    def on_llm_start(self, *arg, **kwargs):
+        self.message_box = st.empty()
+        
+    def on_llm_end(self, *arg, **kwargs):
+        save_message(st.session_state["messages"], self.response, "ai")
+        self.response = ""
+
+    def on_llm_new_token(self, token, *arg, **kwargs):
+        self.response += token
+        self.message_box.markdown(self.response)
+
+history_prompt = ChatPromptTemplate.from_template(
+    """
+    You are given a 'history' that the user and ai talked about.
+
+    BASED on this history If a user asks for something SIMILAR, find the answer in history and print it out.
+
+    If the question is not in history, JUST SAY 'None'
+    DO NOT SAY 'answer: None' and 'Answer: None'
+
+    examples_1
+
+    History:
+    human: What is the color of the occean?
+    ai: Blue. Source:https://ko.wikipedia.org/wiki/%EB%B0%94%EB%8B%A4%EC%83%89 Date:2024-10-13
+
+    Question : What color is the ocean?
+    Answer : Blue. Source:https://ko.wikipedia.org/wiki/%EB%B0%94%EB%8B%A4%EC%83%89 Date:2024-10-13
+
+    examples_2
+    History:
+    human: What is the capital of Georgia?
+    ai: Tbilisi Source:https://en.wikipedia.org/wiki/Capital_of_Georgia Date:2022-08-22
+
+    Question : What are the major cities in Georgia?
+    Answer : Tbilisi Source:https://en.wikipedia.org/wiki/Capital_of_Georgia Date:2022-08-22
+
+    examples_3
+    human: When was Avator released?
+    ai: 2009 Source:https://en.wikipedia.org/wiki/Avatar_(franchise) Date:2022-12-18
+
+    Question : What is Avator2?
+    Answer : None
+
+    examples_4
+
+    History:
+    human: What is the capital of the United States?
+    ai: Washington, D.C. Source:https://ko.wikipedia.org/wiki/%EB%AF%B8%EA%B5%AD Date:2022-10-18
+
+    Question : What is the capital of the Korea?
+    Answer : None
+
+    Your turn!
+    History: {history}
+    
+    Question: {question}
+    """
+)
+
+  
+answers_prompt = ChatPromptTemplate.from_template(
+    """
+    Using ONLY the following context answer the user's question. If you can't answer,
+    Just say you don't know, don't make anyting up.
+
+    Then, give a score to the answer between 0 and 5. 0 being not helpful to
+    the user and 5 being helpful to the user.
+
+    Make sure to include the answer's score.
+    ONLY one result should be output.
+
+    Context : {context}
+
+    Examples:
+
+    Question: How far away is the moon?
+    Answer: The moon is 384,400 km away.
+    Score: 5
+
+    Question: How far away is the sun?
+    Answer: I don't know
+    Score: 0
+
+    Your turn!
+
+    Question : {question}
+    """
+)
+
+choose_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
+            Use ONLY the following pre-existing answers to the user's question.
+
+            Use the answers that have the highest score (more helpful) and favor the most recent ones.
+
+            Return the sources of the answers as they are, do not change them.
+
+            You must print out only one answer. and Don't print out the score
+            
+            Answer: {answers}
+
+            You also have a past answer. Please refert o them and write your answers
+            """,
+        ),
+        MessagesPlaceholder(variable_name="history"),
+        ("human", "{question}"),
+    ]
+)
+
+history_llm = ChatOpenAI(
     temperature=0.1,
     model="gpt-3.5-turbo-0125",
+)
+
+common_llm = ChatOpenAI(
+    temperature=0.1,
+)
+
+choose_llm = ChatOpenAI(
+    temperature=0.1,
     streaming=True,
-    callbacks=[StreamingStdOutCallbackHandler()],
+    callbacks=[ChatCallbackHandler()],
 )
 
-def format_docs(documents):
-    return "\n\n".join(doc.page_content for doc in documents)
-  
-questions_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-            You are a helpful assistant that is role playing as a teacher.
-            Based ONLY on the following context make 10 questoins to test the user's knowledge about the text.
-            Each question should have 4 answers, three of them must be incorrect and one should be correct.
-            Use (o) to signal the correct answer.
-            
-            Question examples
+if "memory" not in st.session_state:
+    st.session_state["memory"] = ConversationSummaryBufferMemory(
+        llm=common_llm,
+        memory_key="history",
+        max_token_limit=150,
+        return_messages=True,
+    )
 
-            Question: What is the color of the occean?
-            Answers: Red|Yellow|Green|Blue(o)
+memory = st.session_state["memory"]
 
-            Question: What is the capital or Georgia?
-            Answers: Baku|Tbilisi(o)|Manila|Beirut
+def get_answers(inputs):
+    docs = inputs["docs"]
+    question = inputs["question"]
+    answers_chain = answers_prompt | common_llm
+    return {
+        "question": question,
+        "answers": [
+            {
+                "answer": answers_chain.invoke(
+                    {
+                        "context": doc.page_content,
+                        "question": question,
+                    }
+                ).content,
+                "source": doc.metadata["source"],
+                "date": doc.metadata["lastmod"],
+            }
+            for doc in docs
+        ],
+        "history": memory.load_memory_variables({})["history"],
+    }
 
-            Question: When was Avator released?
-            Answers: 2007|2001|2009(o)|1998
-            
-            Question: Who was Julius Caesar?
-            Answers: A Roman Emperor(o)|Painter|Actor|Model
-            
-            Your turn!
-            Context: {context}
-            """,
-        )
-    ]
-)
+def choose_answer(inputs):
+    answers = inputs["answers"]
+    question = inputs["question"]
+    history = inputs["history"]
+    choose_chain = choose_prompt | choose_llm
+    condensed = "\n\n".join(
+        f"{answer['answer']}\nSource:{answer['source']}\nDate:{answer['date']}\n"
+        for answer in answers
+    )
+    return choose_chain.invoke(
+        {"question": question, "answers": condensed, "history": history}
+    )
 
-questions_chain = {"context": RunnableLambda(format_docs)} | questions_prompt | llm
-
-formatting_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-            You are a powerful formatting algorithm.
-            You format exam question into JSON format.
-            
-            Answers with (o) are the correct ones.
-
-            Example Input:
-
-            Question: What is the color of the occean?
-            Answers: Red|Yellow|Green|Blue(o)
-            
-            Question: What is the capital or Georgia?
-            Answers: Baku|Tbilisi(o)|Manila|Beirut
-
-            Question: When was Avator released?
-            Answers: 2007|2001|2009(o)|1998
-
-            Question: Who was Julius Caesar?
-            Answers: A Roman Emperor(o)|Painter|Actor|Model
-
-            Example Output:
-            ```json
-            {{ "questions": [
-                    {{
-                        "question": "What is the color of the occean?",
-                        "answers": [
-                            {{
-                                "answer": "Red",
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "Yellow"
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "Green",
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "Blue",
-                                "correct": true
-                            }},
-                        ]
-                    }},
-                    {{
-                        "question": "What is the capital or Georgia?",
-                        "answers": [
-                            {{
-                                "answer": "Baku",
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "Tbilisi"
-                                "correct": true
-                            }},
-                            {{
-                                "answer": "Manila",
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "Beirut",
-                                "correct": false
-                            }},
-                        ]
-                    }},
-                    {{
-                        "question": "When was Avator released?",
-                        "answers": [
-                            {{
-                                "answer": "2007",
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "2001"
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "2009",
-                                "correct": true
-                            }},
-                            {{
-                                "answer": "1998",
-                                "correct": false
-                            }},
-                        ]
-                    }},
-                    {{
-                        "question": "Who was Julius Caesar?",
-                        "answers": [
-                            {{
-                                "answer": "A Roman Emperor",
-                                "correct": true
-                            }},
-                            {{
-                                "answer": "Painter"
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "Actor",
-                                "correct": false
-                            }},
-                            {{
-                                "answer": "Model",
-                                "correct": false
-                            }},
-                        ]
-                    }}                                        
-                ]
-            }}```
-
-            Your turn!
-
-            Question : {context}
-            """,
-        )
-    ]
-)
-
-formatting_chain = formatting_prompt | llm
-
-@st.cache_resource(show_spinner="Loading file...")
-def split_file(file):
-    file_name = file.name
-    file_path = f"./.cache/quiz_files/{file_name}"
-    file_context = file.read()
-    with open(file_path, "wb") as f:
-        f.write(file_context)
+def format_message(messages):
+    history = ""
+    i = 0
+    for message in messages:
+        if i is not len(messages) - 1:
+            history += f"{message['role']} : {message['message']}\n"
+        if i % 2 == 1:
+            history += "\n"
+        i = i + 1
         
-    loader = UnstructuredFileLoader(file_path)
-    splitter = CharacterTextSplitter.from_tiktoken_encoder(
-        separator="\n\n",
-        chunk_size=600,
-        chunk_overlap=100,
-    )
-    documents = loader.load_and_split(text_splitter=splitter)
-    return documents
+    return history
 
-@st.cache_data(show_spinner="Making quiz...")
-def run_quiz_chain(_docs, topic):
-    chain = {"context": questions_chain} | formatting_chain | output_parser
-    return chain.invoke(_docs)
-
-@st.cache_data(show_spinner="Searching wikipedia...")
-def wiki_search(topic):
-    retriever = WikipediaRetriever(top_k_results=5)
-    docs = retriever.get_relevant_documents(topic)
-    return docs
+def invoke_chain(messages, retriever, question):  
+    history = format_message(messages)
+    history_chain = history_prompt | history_llm
+    result = history_chain.invoke({"history": history, "question": question})
+    response = result.content
     
-with st.sidebar:
-    docs = None
-    topic = None
-    file = None
-    choice = st.selectbox(
-        "Choose what you want to use.",
-        (
-            "File",
-            "Wikipedia Article",
-        ),
-    )
-    if choice == "File":
-        file = st.file_uploader(
-            "Upload a .docx, .txt, .pdf file", type=["pdf", "txt", "docx"]
+    if response == "None" or response == "Answer: None":
+        research_chain = (
+            {
+                "docs": retriever,
+                "question": RunnablePassthrough(),
+            }
+            | RunnableLambda(get_answers)
+            | RunnableLambda(choose_answer)
         )
-        if file:
-            docs = split_file(file)
+        with st.chat_message("ai"):
+            answer = research_chain.invoke(question)
+            memory.save_context({"input": question}, {"output": answer.content})
     else:
-        topic = st.text_input("Search Wikipedia")
-        if topic:
-            docs = wiki_search(topic)
-            
-if not docs:
-    st.markdown(
-        """
-        Welcome to QuizGPT.
-
-        I will make a quiz from Wikipedia articles or files you upload to test your knowledge and help you study.
-
-        Get Started by uploading a file or searching on Wikipedia in the sidebar.
-        """
-    )
-else:
-    response = run_quiz_chain(docs, topic if topic else file.name)
-    with st.form("questions_form"):
-        for question in response["questions"]:
-            st.write(question["question"])
-            value = st.radio(
-                "Select an options",
-                [answer["answer"] for answer in question["answers"]],
-                index=None,
-            )
-            if {"answer": value, "correct" : True} in question["answers"]:
-                st.success("Correct!")
-            elif value is not None:
-                for answer in question["answers"]:
-                    if answer["correct"] == True:
-                        st.error(answer["answer"])
-        button = st.form_submit_button()
+        send_message(messages, response, "ai")
+        
+def initialize_memory():
+    memory.clear()
 ```

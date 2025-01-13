@@ -182,7 +182,7 @@ class Tasks:
             DON'T make it up and look for it.
             If the relevant document/image does not exist, JUST Return EMPTY List.",
 
-            file path : {docPaths}
+            file paths : {filePaths}
             """,
             expected_output="""
             Your final answer MUST include the path of other related files  and images within that file.
@@ -278,11 +278,41 @@ class Crews:
             print(e)
             return "Error"
 
-    def run_fileSelect(self, keyward, docPaths: List):
+    def run_imgPathSearch(self, img_path):
+        imgPathSearcher = self.agents.imgPathSearcher()
+        imgPathSearcher_task = self.tasks.imgPathSearch(imgPathSearcher)
+
+        filePathCrew = Crew(
+            agents=[imgPathSearcher],
+            tasks=[imgPathSearcher_task],
+            verbose=True,
+        )
+
+        filePathResult = filePathCrew.kickoff(
+            dict(
+                img_path=img_path,
+            )
+        )
+
+        try:
+            with open("./ImgPath.md", "rb") as f:
+                filePathContent = f.read()
+            filePathResultJson = json.loads(filePathContent)
+            filePaths = filePathResultJson["filePaths"]
+            result = {"filePaths": filePaths}
+            return result
+        except Exception as e:
+            print(e)
+            return "Error"
+    def run_fileSelect(self, keyward, docPaths: List, imgPaths : List):
 
         docPathsStr = ""
         for docPath in docPaths:
             docPathsStr += docPath + "\n"
+
+        imgPathsStr = ""
+        for imgPath in imgPaths:
+            imgPathsStr += imgPath + "\n"
 
         mainFileSearcher = self.agents.mainFileSearcher()
         fileReader = self.agents.fileReader()
@@ -337,7 +367,7 @@ class Crews:
         fileSelectorResult = fileSelectorCrew.kickoff(
             dict(
                 file_path=mainFilePath,
-                docPaths=docPathsStr,
+                filePaths=docPathsStr + imgPathsStr,
             )
         )
 
