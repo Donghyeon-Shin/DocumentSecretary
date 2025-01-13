@@ -1,3 +1,3 @@
 {
-  "mainFile": "./file/Study/LangChain/LangChain Content/08_Site GPT/Site GPT.md"
+  "mainFile": "./file/Study/Algorithm/Algorithm Content/Tree/Fenwick Tree.md"
 }

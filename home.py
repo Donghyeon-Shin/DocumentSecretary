@@ -53,6 +53,15 @@ st.markdown(
     """
 )
 
+if "mainFilePath" not in st.session_state:
+    st.session_state["mainFilePath"] = False
+
+if "relatedFilePaths" not in st.session_state:
+    st.session_state["relatedFilePaths"] = []
+
+if "imagePaths" not in st.session_state:
+    st.session_state["imagePaths"] = []
+
 if "isSuccessFile" not in st.session_state:
     st.session_state["isSuccessFile"] = False
 
@@ -137,8 +146,63 @@ if st.session_state["isSuccessFile"]:
                             )
                         else:
                             st.session_state["isLoadFile"] = True
+                            st.session_state["mainFilePath"] = False
+                            st.session_state["relatedFilePaths"] = [False for i in range(len(fileSelectCrewResult["relatedFilePaths"]))]
+                            st.session_state["imagePaths"] = [False for i in range(len(fileSelectCrewResult["imagePaths"]))]
                             status.update(label="파일을 불러왔습니다.", expanded=False)
                             st.session_state["filePaths"] = fileSelectCrewResult
 
         if st.session_state["filePaths"] != {}:
-            st.session_state["filePaths"]
+
+            st.markdown("## 사용할 문서를 결졍해주세요!")
+            mainFilePath = st.session_state["filePaths"]["mainFilePath"]
+            relatedFilePaths = st.session_state["filePaths"]["relatedFilePaths"]
+            imagePaths = st.session_state["filePaths"]["imagePaths"]
+
+            # 핵심 문서 경로 설정
+            st.write("핵심 문서")
+            if mainFilePath == "No files are associated." or mainFilePath == []:
+                st.error("문서가 존재하지 않습니다.")
+            else:
+                mainFileToggle = st.toggle(mainFilePath)
+
+                if mainFileToggle:
+                    st.session_state["mainFilePath"] = mainFilePath
+                else:
+                    st.session_state["mainFilePath"] = False
+            # 관련 문서 경로 설정
+            st.write("관련 문서들")
+            if relatedFilePaths == []:
+                st.error("문서가 존재하지 않습니다.")
+            else:
+                relatedFilePathsToggles = []
+                for relatedFilePath in relatedFilePaths:
+                    relatedFilePathsToggles.append(st.toggle(relatedFilePath))
+
+                for i, relatedFilePathsToggle in enumerate(relatedFilePathsToggles):
+                    if relatedFilePathsToggle:
+                        st.session_state["relatedFilePaths"][i] = relatedFilePaths[i]
+                    else:
+                        st.session_state["relatedFilePaths"][i] = False
+            # 이미지 경로 설정
+            st.write("관련 이미지들")
+            if imagePaths == []:
+                st.error("이미지가 존재하지 않습니다.")
+            else:
+                imagePathsToggles = []
+                for imagePath in imagePaths:
+                    imagePathsToggles.append(st.toggle(imagePath))
+
+                for i, imagePathsToggle in enumerate(imagePathsToggles):
+                    if imagePathsToggle:
+                        st.session_state["imagePaths"][i] = imagePaths[i]
+                    else:
+                        st.session_state["imagePaths"][i] = False
+
+
+
+            
+
+            st.session_state["mainFilePath"]
+            st.session_state["relatedFilePaths"]
+            st.session_state["imagePaths"]

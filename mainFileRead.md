@@ -1,357 +1,382 @@
-# Detail
-- [[Site Loader]]를 활용하여 `Site`의 정보를 가저와 그 정보를 바탕으로 질문에 답변을 해주는 출력해주는 Page이다.
-- 기본 UI는 [[Document GPT]]와 유사하게 구현하였다.
-- LLM은 크게 두 가지로 구성하였다.
-	- `History Model` : [[Stuff LCEL Chain]]을 바탕으로 하여 User의 `Question`과 `Histroy`(AI와 user의 Message)를 받은 뒤, 해당 `Question`이 예전의 존재하였다면 해당 답변을 그대로 출력하고 존재하지 않았다면 `None`을 출력해주는 `Model`
-	- `Research Model` : [[Map Re-rank LCEL Chain]]을 바탕으로 하여 Retriever에서 User의 `Question`에 알맞은 답변을 찾아 출력해주는 `Model`
-- `Memory`, `Message`, `Chain` 등 여러 기능들을 쉽게 관리하기 위해 각각을 **package 분할**하였다.
-	- `SiteGPT.py` : `SiteGPT`의 메인 Page를 UI을 구성하여 출력하는 file
-	- `Utils.py` : User와 AI의 대화를 출력하고 기록하는 함수들을 모아놓은 package
-	- `Data_process.py` :  [[Site Loader]]로 데이터를 받거나 해당 데이터를 전처리하는 함수들을 모아놓은 package
-	- `Chain.py` : `LLM`, `Memory` 관련된 모든 기능들의 함수들을 모아놓은 package
-# Code
-#### SiteGPT.py
-- [[Streamlit]]의 `Side bar` Widgit을 활용하여 유저에게 `URL`을 받고 해당 값을 `Data_process.py`에 넘겨 Retreiver을 받는다.
-- Retreiver 값에 유저의 질문을 더하여 `Chain.py` 넘겨 `AI`의 Response을 넘겨 받는다. 
-- 이러한 과정을 거쳐 얻은 Response을 `Utils.py`의 function을 이용해 Site에 출력한다.
-- URL의 값이 없을 때, `Memory` 값과 `Message`이 초기화 되도록 구현하였다.
-```python
-import streamlit as st
-from pages.SiteGPT.utils import paint_message, send_message
-from pages.SiteGPT.data_process import get_retriever_in_website
-from pages.SiteGPT.chain import invoke_chain, initialize_memory
+# Concept
+- `Binary Indexed Tree(BIT)`라고도 불린다.
+- [[Segment Tree]]의 변형 트리로 구간의 합을 빠르게 구할 수 있다는 특징이 있다.
+- 시간복잡도는 Segment Tree와 같은 `O(logN)`이지만 공간복잡도는 `O(n)`으로 Segment Tree보다 더 적다.
+- 시간복잡도 자체는 Segment Tree와 같다고 해도 실제론 조금 더 빠르게 작동하게 되는데 선형적으로 `Lazy Segment Tree ≒ 2 * Segment Tree / Segment Tree ≒ 2 * Fenwick Tree`이다.
+# Fenwick Tree 원리
+- Fenwick Tree는 Segment Tree에서 홀수 인덱스만 표기한다.(밑 그림 참조)
+- 모든 구간들은  BIT 연산을 통해 0이 아닌 최하위 비트(같은 높이의 맨좌측 비트)를 구함으로써 해결할 수 있다. 
+- 특정 비트(I)를 통해 최하위 비트를 구하는 공식은 `i & -i (-i = ~i + 1)`이다.
+- ex) i = (1101)2 -> ~i = (0010)2 -> -i = (0011)2 -> i & -i = (0001)2
+#### 🖼️Segment Tree와 Fenwick Tree 구조 비교
+![[Fenwick Tree Struct Graph.svg]]
+- Fenwick Tree에 필요한 기능은 크게 2가지가 있다.
+	1. sum(idx) : `[1~idx]` 범위에 있는 값들의 합을 Return 한다.
+	2. update(idx, val) :  배열의 idx번째와 해당 idx에 해당되는 모든 구간 값을 업데이트 한다.
+- 특정 비트(i)에 최하위 비트가 0이 되기 전까지 빼면 구간의 합을 구할 수 있다. `i -= (i & -i)`
+- 특정 비트(i)에 최하위 비트가 특정 값(m) 될 때까지 더하면 구간을 업데이트  할 수 있다. `i += (i & -i)`
+- 특정 구간 `[l,r]`의 합을 구하기 위해서 **sum(r) - sum(l-1)** 로 계산한다.
+- sum을 하는 과정은 오른쪽 대각선으로 올라가는 것이고, update는 왼쪽 위로 올라가는 과정으로 생각하면 이해하기 편하다.
+- Range Update 즉, `[l,r]` 의 값에 k를 더하기 하기 위해서 **update(l,k) , update(r+1, -k)** 료 계산한다.
+	- 이러한 계산은 Point Query`(array[idx])`를 편하게 구하기 위함이다.
+	- Point Query 을 구하기 위해선 단순히 sum(idx)을 구하면 된다.
+	- update(l,k)는 `[l,m]`까지의 모든 부분 합에 k를 더하기 된다. 
+	- update(r+1, -k)는 `[r+1,m]`까지의 모든 부분 합에 -k를 더하기 된다. 
+	- 두 개의 연산을 통해 `l~r`까지의 부분 합만 k가 더해지게 된다.
+#### 🖼️그림으로 이해하기(Partial Sum)
+![[Fenwick Tree Partial Sum Graph.svg]]
+#### 🖼️그림으로 이해하기(Range Update & Point Query)
+![[Fenwick Tree Range Update & Point Query Graph.svg]]
+# Fenwick Tree CODE
+- BIT 연산만 이해한다면 구현하는데 큰 어려움은 없다.
+- 부분 합과 구간 합을 잘 구별하며 구현하여야 한다.
+- Segment Tree보다 속도 측면에서 빠르지만 응용력이 떨어져 많은 문제에서 사용되진 않는다.
+#### ⌨️ Code(Partial sum)
+```cpp
+#include <bits/stdc++.h>
 
-st.set_page_config(
-    page_title="Site GPT",
-    page_icon="🤣",
-)
+using namespace std;
 
-st.title("Site GPT")
+int n, q, fenwickTree[100001];
 
-st.markdown(
-    """
-    Ask questions about the content of a website.
-
-    Start by writing the URL of the website on the sidebar.
-    """
-)
-
-# ex) https://deepmind.google/sitemap.xml
-
-with st.sidebar:
-    url = st.text_input(
-        "Write down a URL",
-        placeholder="https://example.com/sitemap.xml",
-    )
-
-if url:
-    if ".xml" not in url:
-        with st.sidebar:
-            st.error("Please write down a Stiemap URL")
-    else:
-        retriever = get_retriever_in_website(url)
-        send_message(st.session_state["messages"], "How can I help you?", "ai", save=False)
-        paint_message(st.session_state["messages"])
-        question = st.chat_input("Ask any questions in the document!")
-        if question:
-            send_message(st.session_state["messages"], question, "human")
-            invoke_chain(st.session_state["messages"], retriever, question)
-else:
-    st.session_state["messages"] = []
-    initialize_memory()
-```
-#### Utils.py
-- `paint_message` : 기록된 모든 messages을 출력한다.
-- `save_message` : message와 role를 저장한다.
-- `send_message` : message을 출력하고 `Save` 여부에 따라 message를 저장한다.
-```python
-import streamlit as st
-
-def paint_message(messages):
-    for message in messages:
-        send_message(messages, message["message"], message["role"], save=False)
-        
-def save_message(messages, message, role):
-    messages.append({"message": message, "role": role})
-
-def send_message(messages, message, role, save=True):
-    with st.chat_message(role):
-        st.markdown(message)
-        if save:
-            save_message(messages, message, role)
-```
-#### Data_process.py
-- `parse_page` : `SitemapLoader`을 통해 가져온 `Data`의 전처리 과정을 수행한다.
-- `get_retriever_in_website` : `st.cache_resource`을 사용하여 URL이 바뀔 때만 실행하도록 설정하였고, [[Retrieval]]의 전반적인 과정을 수행한다.
-```python
-import streamlit as st
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import SitemapLoader
-from langchain.vectorstores import FAISS
-from langchain.storage import LocalFileStore
-from langchain.embeddings import OpenAIEmbeddings, CacheBackedEmbeddings
-
-def parse_page(soup):
-    header = soup.find("header")
-    footer = soup.find("footer")
-    if header:
-        header.decompose()
-    if footer:
-        footer.decompose()
-    return str(soup.get_text()).replace("\n", " ").replace("\xa0", " ")
-
-@st.cache_resource(show_spinner="Loading website....")
-def get_retriever_in_website(url):
-    splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=1000,
-        chunk_overlap=200,
-    )
-    loader = SitemapLoader(
-        url,
-        parsing_function=parse_page,
-    )
-    loader.requests_per_second = 5
-    docs = loader.load_and_split(text_splitter=splitter)
-    url_name = (
-        str(url).replace("https://", "").replace(".", "").replace("/sitemapxml", "")
-    )
-    cache_dir = LocalFileStore(f"./.cache/Site_embeddings/{url_name}")
-    embedder = OpenAIEmbeddings()
-    cache_embedder = CacheBackedEmbeddings.from_bytes_store(embedder, cache_dir)
-    vector_store = FAISS.from_documents(docs, cache_embedder)
-    return vector_store.as_retriever()
-```
-#### Chain.py
-##### History Model
-- `History Model`은 user와 ai의 대화를 기반으로 user의 질문이 과거의 했던 질문과 비슷한 내용인지를 판단하고 비슷하다면 과거 답변을 그대로 출력하고 비슷한 답변이 없다면 `None`을 출력하도록 설정한 Model이다.
-- 해당 `prompt`에 example을 제시하여 원하는 답변을 얻을 수 있도록 유도하였다. 
-- user와 ai의 대화를 `format_message()` function을 통해 example에 맞게 `전처리`하였고, 마지막에 **유저의 질문이 message에 포함되어 있기 떄문에 이는 포함되지 않게 처리**하였다. (중복 내용 제거)
-- 비슷한 질문에 대해서는 과거 기록을 가져와 그대로 출력 하였지만 비슷한 질문이 없을 시에 처음에는 `None`을 출력하다가 다음부턴 `Answer: None`을 출력하는 문제가 발생했다. 이에 `Prompt`에 `Answer: None`을 출력하지 말라고 명시하였으나, example 때문인지 해당 내용을 듣지 않고 계속 `None`이 아닌 `Answer: None`을 출력하는 문제가 발생하였다.
-- 이를 해결하기 위해서 message가 처음일 때는 `History Model`을 사용하지 않게 하여 `None`을 출력 하지 않게 하거나, `Prompt`의 example을 수정하여 `Answer: None`을 출력하지 않게 하는 등의 수정이 필요할 것 같다.
-##### Research Model
-- History Model에서 값이 `None`이 나온다면 `Research Model`을 실행하여 Retriever에서 User의 질문에 알맞은 답변을 찾아 출력해주는 Model이다.
-- `Research Model`은 `Answers Chain`과 `Choose Chain`으로 구성되어 있으며, 자세한 내용은 [[Map Re-rank LCEL Chain]]을 참고하면 된다.
-- `Choose Chain`에는 [[Memory Modules]](ConversationSummaryBufferMemory) 기능을 추가하여 결과를 출력할 때, 과거의 답변 또한 고려되게 구현하였다.
-- 각각의 Chain들이 `RunnableLambda`로 이어져 있기 때문에 안에 실행되는 `function`의 `Parameter`의 경우는 **`dictionary` or `callable object`** 이어야 한다는 점을 주의해야 한다.
-```python
-import streamlit as st
-from langchain.callbacks.base import BaseCallbackHandler
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
-from langchain.memory import ConversationSummaryBufferMemory
-from pages.SiteGPT.utils import save_message, send_message
-
-class ChatCallbackHandler(BaseCallbackHandler):
-    def __init__(self):
-        self.response = ""
-        
-    def on_llm_start(self, *arg, **kwargs):
-        self.message_box = st.empty()
-        
-    def on_llm_end(self, *arg, **kwargs):
-        save_message(st.session_state["messages"], self.response, "ai")
-        self.response = ""
-
-    def on_llm_new_token(self, token, *arg, **kwargs):
-        self.response += token
-        self.message_box.markdown(self.response)
-
-history_prompt = ChatPromptTemplate.from_template(
-    """
-    You are given a 'history' that the user and ai talked about.
-
-    BASED on this history If a user asks for something SIMILAR, find the answer in history and print it out.
-
-    If the question is not in history, JUST SAY 'None'
-    DO NOT SAY 'answer: None' and 'Answer: None'
-
-    examples_1
-
-    History:
-    human: What is the color of the occean?
-    ai: Blue. Source:https://ko.wikipedia.org/wiki/%EB%B0%94%EB%8B%A4%EC%83%89 Date:2024-10-13
-
-    Question : What color is the ocean?
-    Answer : Blue. Source:https://ko.wikipedia.org/wiki/%EB%B0%94%EB%8B%A4%EC%83%89 Date:2024-10-13
-
-    examples_2
-    History:
-    human: What is the capital of Georgia?
-    ai: Tbilisi Source:https://en.wikipedia.org/wiki/Capital_of_Georgia Date:2022-08-22
-
-    Question : What are the major cities in Georgia?
-    Answer : Tbilisi Source:https://en.wikipedia.org/wiki/Capital_of_Georgia Date:2022-08-22
-
-    examples_3
-    human: When was Avator released?
-    ai: 2009 Source:https://en.wikipedia.org/wiki/Avatar_(franchise) Date:2022-12-18
-
-    Question : What is Avator2?
-    Answer : None
-
-    examples_4
-
-    History:
-    human: What is the capital of the United States?
-    ai: Washington, D.C. Source:https://ko.wikipedia.org/wiki/%EB%AF%B8%EA%B5%AD Date:2022-10-18
-
-    Question : What is the capital of the Korea?
-    Answer : None
-
-    Your turn!
-    History: {history}
-    
-    Question: {question}
-    """
-)
-
-  
-answers_prompt = ChatPromptTemplate.from_template(
-    """
-    Using ONLY the following context answer the user's question. If you can't answer,
-    Just say you don't know, don't make anyting up.
-
-    Then, give a score to the answer between 0 and 5. 0 being not helpful to
-    the user and 5 being helpful to the user.
-
-    Make sure to include the answer's score.
-    ONLY one result should be output.
-
-    Context : {context}
-
-    Examples:
-
-    Question: How far away is the moon?
-    Answer: The moon is 384,400 km away.
-    Score: 5
-
-    Question: How far away is the sun?
-    Answer: I don't know
-    Score: 0
-
-    Your turn!
-
-    Question : {question}
-    """
-)
-
-choose_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-            Use ONLY the following pre-existing answers to the user's question.
-
-            Use the answers that have the highest score (more helpful) and favor the most recent ones.
-
-            Return the sources of the answers as they are, do not change them.
-
-            You must print out only one answer. and Don't print out the score
-            
-            Answer: {answers}
-
-            You also have a past answer. Please refert o them and write your answers
-            """,
-        ),
-        MessagesPlaceholder(variable_name="history"),
-        ("human", "{question}"),
-    ]
-)
-
-history_llm = ChatOpenAI(
-    temperature=0.1,
-    model="gpt-3.5-turbo-0125",
-)
-
-common_llm = ChatOpenAI(
-    temperature=0.1,
-)
-
-choose_llm = ChatOpenAI(
-    temperature=0.1,
-    streaming=True,
-    callbacks=[ChatCallbackHandler()],
-)
-
-if "memory" not in st.session_state:
-    st.session_state["memory"] = ConversationSummaryBufferMemory(
-        llm=common_llm,
-        memory_key="history",
-        max_token_limit=150,
-        return_messages=True,
-    )
-
-memory = st.session_state["memory"]
-
-def get_answers(inputs):
-    docs = inputs["docs"]
-    question = inputs["question"]
-    answers_chain = answers_prompt | common_llm
-    return {
-        "question": question,
-        "answers": [
-            {
-                "answer": answers_chain.invoke(
-                    {
-                        "context": doc.page_content,
-                        "question": question,
-                    }
-                ).content,
-                "source": doc.metadata["source"],
-                "date": doc.metadata["lastmod"],
-            }
-            for doc in docs
-        ],
-        "history": memory.load_memory_variables({})["history"],
+void fenwickTree_Update(int idx, int val) {
+    while ( idx <= n ) {
+        fenwickTree[idx] += val;
+        idx += (idx & -idx);
     }
+}
 
-def choose_answer(inputs):
-    answers = inputs["answers"]
-    question = inputs["question"]
-    history = inputs["history"]
-    choose_chain = choose_prompt | choose_llm
-    condensed = "\n\n".join(
-        f"{answer['answer']}\nSource:{answer['source']}\nDate:{answer['date']}\n"
-        for answer in answers
-    )
-    return choose_chain.invoke(
-        {"question": question, "answers": condensed, "history": history}
-    )
+int fenwickTree_Sum(int idx) {
+    int result = 0;
+    while ( idx > 0 ) {
+        result += fenwickTree[idx];
+        idx -= (idx & -idx);
+    }
+    return result;
+}
 
-def format_message(messages):
-    history = ""
-    i = 0
-    for message in messages:
-        if i is not len(messages) - 1:
-            history += f"{message['role']} : {message['message']}\n"
-        if i % 2 == 1:
-            history += "\n"
-        i = i + 1
-        
-    return history
-
-def invoke_chain(messages, retriever, question):  
-    history = format_message(messages)
-    history_chain = history_prompt | history_llm
-    result = history_chain.invoke({"history": history, "question": question})
-    response = result.content
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL); cout.tie(NULL);
     
-    if response == "None" or response == "Answer: None":
-        research_chain = (
-            {
-                "docs": retriever,
-                "question": RunnablePassthrough(),
-            }
-            | RunnableLambda(get_answers)
-            | RunnableLambda(choose_answer)
-        )
-        with st.chat_message("ai"):
-            answer = research_chain.invoke(question)
-            memory.save_context({"input": question}, {"output": answer.content})
-    else:
-        send_message(messages, response, "ai")
-        
-def initialize_memory():
-    memory.clear()
+    cin >> n >> q;
+    
+    while ( q-- ) {
+        int cmd;
+        cin >> cmd;
+        if ( cmd == 1 ) {
+            int idx, val;
+            cin >> idx >> val;
+            fenwickTree_Update(idx, val);
+        } else if ( cmd == 2 ) {
+            int idx;
+            cin >> idx;
+            cout << fenwickTree_Sum(idx) << '\n';
+        }
+    }
+    return 0;
+}
 ```
+##### ❓ 예제 Input
+	8 8
+	1 3 10
+	1 2 5
+	1 5 5
+	1 8 7
+	2 3
+	2 5
+	3 4 5
+	3 1 8
+##### ⭐ 예제 Output
+	15
+	20
+	5
+	27
+#### ⌨️ Code(Range Update & Point Query)
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int n, q, fenwickTree[100001];
+
+void fenwickTree_Update(int idx, int val) {
+    while ( idx <= n ) {
+        fenwickTree[idx] += val;
+        idx += (idx & -idx);
+    }
+}
+
+int fenwickTree_Sum(int idx) {
+    int result = 0;
+    while ( idx > 0 ) {
+        result += fenwickTree[idx];
+        idx -= (idx & -idx);
+    }
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL); cout.tie(NULL);
+    
+    cin >> n >> q;
+    while ( q-- ) {
+        int cmd;
+        cin >> cmd;
+        if ( cmd == 1 ) {
+            int l, r, val;
+            cin >> l >> r >> val;
+            fenwickTree_Update(l, val);
+            fenwickTree_Update(r+1, -val);
+        } else if ( cmd == 2 ) {
+            int idx;
+            cin >> idx;
+            cout << fenwickTree_Sum(idx) << '\n';
+        }
+    }
+    return 0;
+}
+```
+##### ❓ 예제 Input
+	8 7
+	1 1 5 10
+	2 5
+	1 2 2 5
+	2 2
+	1 1 8 7
+	2 1
+	2 2
+##### ⭐ 예제 Output
+	10
+	15
+	17
+	22
+# Fenwick Tree 응용문제
+### 📑[8217 - 유성](https://www.acmicpc.net/problem/8217)
+#### 🔓 KeyPoint
+- [[PBS(Parallel Binary Search)]]에 Fenwick Tree을 응용한 문제이다.
+- 구간의 합이 쿼리가 주어질 때 이를 이용하여 각 국가의 할당량이 몇 번째 쿼리가 될 때 채워지는지를 구하면 된다.
+- 각 국가마다 `특정 일(D) 안에 할당량을 채울 수 있는가?`라는 이분 탐색을 병렬로 진행하면 문제를 풀 수 있다.
+- 이분 탐색을 진행하는 과정에서 할당량을 구하기 위해 [[Lazy Segment Tree]]을 사용하게 되면 **시간 초과**기 된다.
+- 시간 초과를 해결하기 위해 Lazy가 아닌 Fenwick Tree를 이용하면 이를 해결할 수 있다.
+- Fenwick 중 구간의 합을 구하기기 때문에 Range Update & Point Query을 이용한다.
+- 구간은 끝이 이어져있는 **원형 형태**이기 때문에 이를 유의하여야 한다.
+#### ⌨️ Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int n, m, q, countryQuota[300001];
+long long fenwickTree[300001];
+pair<int,int> queryRange[300001];
+tuple<bool,int,int,long long> query[300001];
+vector<int> countryArea[300001], queryMidValue[300001];
+
+void fenwickTree_Update(int idx, long long val) {
+    while ( idx <= m ) {
+        fenwickTree[idx] += val;
+        idx += (idx & -idx);
+    }
+}
+
+long long fenwickTree_Sum(int idx) {
+    long long result = 0;
+    while ( idx > 0 ) {
+        result += fenwickTree[idx];
+        idx -= (idx & -idx);
+    }
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL); cout.tie(NULL);
+    
+    cin >> n >> m;
+    for ( int i = 1; i <= m; i++ ) {
+        int num;
+        cin >> num;
+        countryArea[num].push_back(i);
+    }
+    
+    for ( int i = 1; i <= n; i++ ) cin >> countryQuota[i];
+    
+    cin >> q;
+    for ( int i = 1; i <= q; i++ ) {
+        int l, r;
+        long long a;
+        bool isLeftBiggerThanRight = false;
+        cin >> l >> r >> a;
+        if ( l > r ) {
+            isLeftBiggerThanRight = true;
+            swap(l, r);
+        }
+        query[i] = {isLeftBiggerThanRight, l, r, a};
+    }
+    
+    for ( int i = 1; i <= n; i++ ) {
+        queryRange[i].first = 1; queryRange[i].second = q + 1;
+    }
+    
+    while ( 1 ) {
+        bool flag = false;
+        memset(fenwickTree, 0, sizeof(fenwickTree));
+        
+        for ( int i = 0; i <= q; i++ ) queryMidValue[i].clear();
+        
+        for ( int i = 1; i <= n; i++ ) {
+            if ( queryRange[i].first < queryRange[i].second ) {
+                flag = true;
+                int mid = (queryRange[i].first + queryRange[i].second) / 2;
+                queryMidValue[mid].push_back(i);
+            }
+        }
+        
+        if ( !flag ) break;
+        
+        for ( int i = 1; i <= q; i++ ) {
+            bool isLeftBiggerThanRight = get<0>(query[i]);
+            int queryL = get<1>(query[i]);
+            int queryR = get<2>(query[i]);
+            long long queryVal = get<3>(query[i]);
+            
+            if ( isLeftBiggerThanRight ) {
+                fenwickTree_Update(1, queryVal);
+                fenwickTree_Update(queryL+1, -queryVal);
+                fenwickTree_Update(queryR, queryVal);
+            } else {
+                fenwickTree_Update(queryL, queryVal);
+                fenwickTree_Update(queryR + 1, -queryVal);
+            }
+            
+            for ( auto nodeIdx : queryMidValue[i] ) {
+                long long result = 0;
+                for ( auto node : countryArea[nodeIdx] ) {
+                    result += fenwickTree_Sum(node);
+                    if ( result >= countryQuota[nodeIdx] ) break;
+                }
+                if ( result >= countryQuota[nodeIdx] ) queryRange[nodeIdx].second = i;
+                else queryRange[nodeIdx].first = i+1;
+            }
+        }
+    }
+    
+    for ( int i = 1; i <= n; i++ ) {
+        if ( queryRange[i].first == q + 1 ) cout << "NIE\n";
+        else cout << queryRange[i].first << '\n';
+    }
+    return 0;
+}
+```
+### 📑[15957 - 음악추천](https://www.acmicpc.net/problem/15957)
+#### 🔓 KeyPoint
+- 마찬가지로 [[PBS(Parallel Binary Search)]]에서 Fenwick Tree를 응용하는 문제이다.
+- 문제의 조건이 매우 많고 복잡하기 때문에 여러 개의 틀로 문제를 나누어 푸는 것이 좋다.
+- 주어지는 값들이 Tree 형태로 주어져있고 해당 Tree에 구간의 합을 적용해야 하기 때문에 [[ETT(Euler Tour Technique)]]을 적용해야 한다.
+- 최종적으로 구하는 것이 **목표점수를 초과하는 시점** 이기 떄문에 각각의 가수들이 `특정 시점(K)에 목표 점수를 넘는가?`를 이분탐색 기준으로 잡고 이분 병렬 탐색을 진행하여야 한다.
+- Fenwick Tree에서 각 Point 값을 sum하는 과정에서 이미 목표 점수를 넘었으면 계산을 더 이상 하지 않고 값을 넘겨야 시간 초과를 방지할 수 있다.
+#### ⌨️ Code
+```cpp
+#include <bits/stdc++.h>
+#define maxLen 100001
+
+using namespace std;
+
+int n, k, ettCnt = 0, s[maxLen], e[maxLen], singers[maxLen], subTreeRoot[maxLen];
+long long j, queryWeight[maxLen], fenwickTree[maxLen];
+pair<int,int> queryRange[maxLen];
+vector<int> tree[maxLen], songsBasedSinger[maxLen], queryMidValue[maxLen];
+vector<pair<long long, int>> query;
+
+void fenwickTree_Update(int idx, long long val) {
+    while ( idx <= n ) {
+        fenwickTree[idx] += val;
+        idx += (idx & -idx);
+    }
+}
+
+long long fenwickTree_Sum(int idx) {
+    long long result = 0;
+    while ( idx > 0 ) {
+        result += fenwickTree[idx];
+        idx -= (idx & -idx);
+    }
+    return result;
+}
+
+void ett(int node) {
+    s[node] = ++ettCnt;
+    for ( auto nNode : tree[node] ) {
+        if ( s[nNode] == 0 ) ett(nNode);
+    }
+    e[node] = ettCnt;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    cin >> n >> k >> j;
+    for ( int i = 2; i <= n; i++ ) {
+        int root;
+        cin >> root;
+        tree[root].push_back(i);
+    }
+    
+    ett(1);
+    
+    for ( int i = 1; i <= n; i++ ) {
+        cin >> singers[i];
+        songsBasedSinger[singers[i]].push_back(i);
+    }
+    
+    query.push_back({-1, -1});
+    for ( int i = 1; i <= k; i++ ) {
+        long long dateTime;
+        cin >> dateTime >> subTreeRoot[i] >> queryWeight[i];
+        query.push_back({dateTime, i});
+    }
+    sort(query.begin(), query.end());
+    
+    for ( int i = 1; i <= k; i++ ) {
+        queryRange[i].first = ((int)songsBasedSinger[i].size() == 0 ) ? k+1 : 1;
+        queryRange[i].second = k+1;
+    }
+    
+    while ( 1 ) {
+        bool flag = false;
+        for ( int i = 1; i <= k; i++ ) queryMidValue[i].clear();
+        memset(fenwickTree, 0, sizeof(fenwickTree));
+        
+        for ( int i = 1; i <= k; i++ ) {
+            int l = queryRange[i].first, r = queryRange[i].second;
+            if ( l < r ) {
+                flag = true;
+                int mid = (l + r) / 2;
+                queryMidValue[mid].push_back(i);
+            }
+        }
+        
+        if ( !flag ) break;
+        
+        for ( int i = 1; i <= k; i++ ) {
+            int queryIdx = query[i].second;
+            int root = subTreeRoot[queryIdx];
+            long long weight = queryWeight[queryIdx];
+            
+            long long avgWeight = weight / (e[root] - s[root] + 1);
+            fenwickTree_Update(s[root], avgWeight);
+            fenwickTree_Update(e[root] + 1, -avgWeight);
+            
+            for ( auto singerIdx : queryMidValue[i] ) {
+                long long result = 0;
+                int songsCnt = (int)songsBasedSinger[singerIdx].size();
+                for ( auto song : songsBasedSinger[singerIdx] ) {
+                    result += fenwickTree_Sum(s[song]);
+                    if ( result > j * songsCnt ) break;
+                }
+                if ( result > j * songsCnt ) queryRange[singerIdx].second = i;
+                else queryRange[singerIdx].first = i+1;

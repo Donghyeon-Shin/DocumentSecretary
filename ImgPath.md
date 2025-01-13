@@ -46,7 +46,7 @@
     "./file/Study/Algorithm/Reference/Tree Reference/Merge Sort Ref/Merge Sort Tree Graph.png",
     "./file/Study/Algorithm/Reference/Tree Reference/MST Ref/MST Graph.png",
     "./file/Study/Algorithm/Reference/Tree Reference/Segment Tree Ref/Segment Tree Graph.png",
-    "./file/Study/Algorithm/Reference/Tree Reference/Union Find Ref/Union Find Graph.png",
+    "./file/Study/Algorithm/Reference/Tree Reference/Union FInd Ref/Union Find Graph.png",
     "./file/Study/Algorithm/Reference/Unclassified Rerference/Bitmask Ref/Bitmask Graph.png",
     "./file/Study/Algorithm/Reference/Unclassified Rerference/BT Ref/BT Graph.png",
     "./file/Study/Algorithm/Reference/Unclassified Rerference/Great Problem Ref/Fish Game.png",

@@ -1,9 +1,12 @@
 {
   "relatedFiles": [
-    "./Study/LangChain/LangChain Content/08_Site GPT/Site Loader.md",
-    "./Study/LangChain/LangChain Content/05_Document GPT/Document GPT.md",
-    "./Study/LangChain/LangChain Content/04_RAG/Map Re-rank LCEL Chain.md",
-    "./Study/LangChain/LangChain Content/04_RAG/Stuff LCEL Chain.md"
+    "./Study/Algorithm/Algorithm Content/Tree/Lazy Segment Tree.md",
+    "./Study/Algorithm/Algorithm Content/Tree/Segment Tree.md",
+    "./Study/Algorithm/Algorithm Content/Tree/Fenwick Tree.md"
   ],
-  "imageFiles": []
+  "imageFiles": [
+    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Struct Graph.png",
+    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Partial Sum Graph.png",
+    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Range Update & Point Query Graph.png"
+  ]
 }

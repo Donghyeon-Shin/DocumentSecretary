@@ -126,8 +126,8 @@ class Tasks:
 
     def imgPathSearch(self, agent):
         return Task(
-            description="Finds ALL the image files and inside {img_path} path. but NOT Include svg Image.",
-            expected_output="Your final answer MUST be image path. svg images should NEVER be included. NEVER arbitrarily modify the path. Just Answer path in file_path",
+            description="Finds ALL the image files and inside {img_path} path.",
+            expected_output="Your final answer MUST be image path. NEVER arbitrarily modify the path. Just Answer path in file_path",
             agent=agent,
             output_json=filePath,
             output_file="ImgPath.md",
@@ -376,11 +376,19 @@ class Crews:
                 fileSelectContent = f.read()
             fileSelectResultJson = json.loads(fileSelectContent)
             relatedFilePaths = fileSelectResultJson["relatedFiles"]
-            imageFilePaths = fileSelectResultJson["imageFiles"]
+            imagePathsList = fileSelectResultJson["imageFiles"]
+
+            #Image File 확장자 확인하기(중복으로 사용되어 함수로 만들어 활용해도 될 것 같음.)
+            imagePaths = []
+
+            for imgPath in imagePathsList:
+                if os.path.splitext(imgPath)[1] != ".svg":
+                    imagePaths.append(imgPath)
+            
             result = {
                 "mainFilePath": mainFilePath,
                 "relatedFilePaths": relatedFilePaths,
-                "imageFilePaths": imageFilePaths,
+                "imagePaths": imagePaths,
             }
             return result
         except Exception as e:
