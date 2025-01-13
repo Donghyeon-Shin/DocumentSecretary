@@ -1,382 +1,287 @@
-# Concept
-- `Binary Indexed Tree(BIT)`라고도 불린다.
-- [[Segment Tree]]의 변형 트리로 구간의 합을 빠르게 구할 수 있다는 특징이 있다.
-- 시간복잡도는 Segment Tree와 같은 `O(logN)`이지만 공간복잡도는 `O(n)`으로 Segment Tree보다 더 적다.
-- 시간복잡도 자체는 Segment Tree와 같다고 해도 실제론 조금 더 빠르게 작동하게 되는데 선형적으로 `Lazy Segment Tree ≒ 2 * Segment Tree / Segment Tree ≒ 2 * Fenwick Tree`이다.
-# Fenwick Tree 원리
-- Fenwick Tree는 Segment Tree에서 홀수 인덱스만 표기한다.(밑 그림 참조)
-- 모든 구간들은  BIT 연산을 통해 0이 아닌 최하위 비트(같은 높이의 맨좌측 비트)를 구함으로써 해결할 수 있다. 
-- 특정 비트(I)를 통해 최하위 비트를 구하는 공식은 `i & -i (-i = ~i + 1)`이다.
-- ex) i = (1101)2 -> ~i = (0010)2 -> -i = (0011)2 -> i & -i = (0001)2
-#### 🖼️Segment Tree와 Fenwick Tree 구조 비교
-![[Fenwick Tree Struct Graph.svg]]
-- Fenwick Tree에 필요한 기능은 크게 2가지가 있다.
-	1. sum(idx) : `[1~idx]` 범위에 있는 값들의 합을 Return 한다.
-	2. update(idx, val) :  배열의 idx번째와 해당 idx에 해당되는 모든 구간 값을 업데이트 한다.
-- 특정 비트(i)에 최하위 비트가 0이 되기 전까지 빼면 구간의 합을 구할 수 있다. `i -= (i & -i)`
-- 특정 비트(i)에 최하위 비트가 특정 값(m) 될 때까지 더하면 구간을 업데이트  할 수 있다. `i += (i & -i)`
-- 특정 구간 `[l,r]`의 합을 구하기 위해서 **sum(r) - sum(l-1)** 로 계산한다.
-- sum을 하는 과정은 오른쪽 대각선으로 올라가는 것이고, update는 왼쪽 위로 올라가는 과정으로 생각하면 이해하기 편하다.
-- Range Update 즉, `[l,r]` 의 값에 k를 더하기 하기 위해서 **update(l,k) , update(r+1, -k)** 료 계산한다.
-	- 이러한 계산은 Point Query`(array[idx])`를 편하게 구하기 위함이다.
-	- Point Query 을 구하기 위해선 단순히 sum(idx)을 구하면 된다.
-	- update(l,k)는 `[l,m]`까지의 모든 부분 합에 k를 더하기 된다. 
-	- update(r+1, -k)는 `[r+1,m]`까지의 모든 부분 합에 -k를 더하기 된다. 
-	- 두 개의 연산을 통해 `l~r`까지의 부분 합만 k가 더해지게 된다.
-#### 🖼️그림으로 이해하기(Partial Sum)
-![[Fenwick Tree Partial Sum Graph.svg]]
-#### 🖼️그림으로 이해하기(Range Update & Point Query)
-![[Fenwick Tree Range Update & Point Query Graph.svg]]
-# Fenwick Tree CODE
-- BIT 연산만 이해한다면 구현하는데 큰 어려움은 없다.
-- 부분 합과 구간 합을 잘 구별하며 구현하여야 한다.
-- Segment Tree보다 속도 측면에서 빠르지만 응용력이 떨어져 많은 문제에서 사용되진 않는다.
-#### ⌨️ Code(Partial sum)
-```cpp
-#include <bits/stdc++.h>
+```markdown
+# Detail ( Common )
+- `file`을 입력 받거나 `Wikipedia`에서 검색한 값을 바탕으로 Quiz을 만들어 출력해주는 `site`이다.
+- Streamlit의 `sidebar`에 `file upload`와 `Wikipedia` 검색 기능을 구현하였다.
+- `file upload`는 [[Document GPT]]와 동일한 기능이 사용하고 `Wikipedia`의 경우는 [[WikipediaRetriever]]을 사용하였다.
+- `file upload`와 `Wikipedia` 모두 값이 변하지 않는 이상 초기화 할 필요가 없기 때문에 `@st.cache`을 사용한다.
+- `Chain`을 만드는 과정 또한 `file upload`와 `Wikipedia`에서 얻은 값(`docs`)이 바뀌지 않는다면 초기화 할 필요가 없기 때문에 `@st.cache`을 이용한다. 하지만 `docs`이 hash 할 수 없는 값이기 때문에 따로 `hash`할 수 있는 값을 포함하여 function을 구성해야 한다. (자세한 내용은 [[Streamlit]] 참고)
+- Streamlit의 `form`을 이용하여 `Chain`을 통해 얻은 `json 값`을 바탕으로 quiz UI를 구현하였고 `success`와 `error` Widgit을 활용하여 `Submit Button`을 누를 시,  정답 유/무가 나오도록 구현하였다.
+# Code
+#### Two chains and json output_parser Ver.
+- `questions_chain`을 이용하여 `input docs`를 바탕으로 Quiz 형식의 `output`을 받는다.
+- 그 값을 `formatting_chain`을 넣어 json 형식의 `string` 값으로 변환 시킨다.
+- 마지막으로 string으로 된 값을 `OutputParser`을 이용하여 `json` 형식으로 값을 `return` 한다.
+- 모든 과정을 `chain = {"context": questions_chain} | formatting_chain | output_parser`으로 연결 시킨다.
+- `formatting_chain`의 `formatting_prompt`의 경우 `example input`과 `example out`을 넣어 model이 `json` 형식으로 나올 수 있도록 설정할 수 있는데 여기서 `'''json`을 사용하는 이유는 llm에게 일종의 시작점을 알려주는 것이다. 이렇게 하지 않으면 보통 `알겠습니다.` or `기꺼이 하겠습니다.` 같은 말로 시작을 하기 때문에 **json 결과 값**만 얻기 위해 이런 식으로 작성한 것이다. `{{ `을 사용하는 것 또한 `prompt`에서 template variable(`{}`)과 헷갈리게 하고 싶지 않아서 이다.
+- `output_parser`는 결과 값의 일부를 수정(`text = text.replace("```", "").replace("json", "")`)하고 이를 `import json`을 통해 `json` 형식으로 값을 `return`한다.
+```python
+import streamlit as st
+import json
+from langchain.chat_models import ChatOpenAI
+from langchain.retrievers import WikipediaRetriever
+from langchain.document_loaders import UnstructuredFileLoader
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.prompts import ChatPromptTemplate
+from langchain.callbacks import StreamingStdOutCallbackHandler
+from langchain.schema.runnable import RunnableLambda
+from langchain.schema import BaseOutputParser
 
-using namespace std;
+class JsonOutputParser(BaseOutputParser):
+    def parse(self, text):
+        text = text.replace("```", "").replace("json", "")
+        return json.loads(text)
 
-int n, q, fenwickTree[100001];
+output_parser = JsonOutputParser()
 
-void fenwickTree_Update(int idx, int val) {
-    while ( idx <= n ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
-    }
-}
+st.set_page_config(
+    page_title="QuizGpt",
+    page_icon="🤣",
+)
 
-int fenwickTree_Sum(int idx) {
-    int result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
-    }
-    return result;
-}
+st.title("QuizGPT")
 
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL); cout.tie(NULL);
+llm = ChatOpenAI(
+    temperature=0.1,
+    model="gpt-3.5-turbo-0125",
+    streaming=True,
+    callbacks=[StreamingStdOutCallbackHandler()],
+)
+
+def format_docs(documents):
+    return "\n\n".join(doc.page_content for doc in documents)
+  
+questions_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
+            You are a helpful assistant that is role playing as a teacher.
+            Based ONLY on the following context make 10 questoins to test the user's knowledge about the text.
+            Each question should have 4 answers, three of them must be incorrect and one should be correct.
+            Use (o) to signal the correct answer.
+            
+            Question examples
+
+            Question: What is the color of the occean?
+            Answers: Red|Yellow|Green|Blue(o)
+
+            Question: What is the capital or Georgia?
+            Answers: Baku|Tbilisi(o)|Manila|Beirut
+
+            Question: When was Avator released?
+            Answers: 2007|2001|2009(o)|1998
+            
+            Question: Who was Julius Caesar?
+            Answers: A Roman Emperor(o)|Painter|Actor|Model
+            
+            Your turn!
+            Context: {context}
+            """,
+        )
+    ]
+)
+
+questions_chain = {"context": RunnableLambda(format_docs)} | questions_prompt | llm
+
+formatting_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
+            You are a powerful formatting algorithm.
+            You format exam question into JSON format.
+            
+            Answers with (o) are the correct ones.
+
+            Example Input:
+
+            Question: What is the color of the occean?
+            Answers: Red|Yellow|Green|Blue(o)
+            
+            Question: What is the capital or Georgia?
+            Answers: Baku|Tbilisi(o)|Manila|Beirut
+
+            Question: When was Avator released?
+            Answers: 2007|2001|2009(o)|1998
+
+            Question: Who was Julius Caesar?
+            Answers: A Roman Emperor(o)|Painter|Actor|Model
+
+            Example Output:
+            ```json
+            {{ "questions": [
+                    {{
+                        "question": "What is the color of the occean?",
+                        "answers": [
+                            {{
+                                "answer": "Red",
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "Yellow"
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "Green",
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "Blue",
+                                "correct": true
+                            }},
+                        ]
+                    }},
+                    {{
+                        "question": "What is the capital or Georgia?",
+                        "answers": [
+                            {{
+                                "answer": "Baku",
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "Tbilisi"
+                                "correct": true
+                            }},
+                            {{
+                                "answer": "Manila",
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "Beirut",
+                                "correct": false
+                            }},
+                        ]
+                    }},
+                    {{
+                        "question": "When was Avator released?",
+                        "answers": [
+                            {{
+                                "answer": "2007",
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "2001"
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "2009",
+                                "correct": true
+                            }},
+                            {{
+                                "answer": "1998",
+                                "correct": false
+                            }},
+                        ]
+                    }},
+                    {{
+                        "question": "Who was Julius Caesar?",
+                        "answers": [
+                            {{
+                                "answer": "A Roman Emperor",
+                                "correct": true
+                            }},
+                            {{
+                                "answer": "Painter"
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "Actor",
+                                "correct": false
+                            }},
+                            {{
+                                "answer": "Model",
+                                "correct": false
+                            }},
+                        ]
+                    }}                                        
+                ]
+            }}```
+
+            Your turn!
+
+            Question : {context}
+            """,
+        )
+    ]
+)
+
+formatting_chain = formatting_prompt | llm
+
+@st.cache_resource(show_spinner="Loading file...")
+def split_file(file):
+    file_name = file.name
+    file_path = f"./.cache/quiz_files/{file_name}"
+    file_context = file.read()
+    with open(file_path, "wb") as f:
+        f.write(file_context)
+        
+    loader = UnstructuredFileLoader(file_path)
+    splitter = CharacterTextSplitter.from_tiktoken_encoder(
+        separator="\n\n",
+        chunk_size=600,
+        chunk_overlap=100,
+    )
+    documents = loader.load_and_split(text_splitter=splitter)
+    return documents
+
+@st.cache_data(show_spinner="Making quiz...")
+def run_quiz_chain(_docs, topic):
+    chain = {"context": questions_chain} | formatting_chain | output_parser
+    return chain.invoke(_docs)
+
+@st.cache_data(show_spinner="Searching wikipedia...")
+def wiki_search(topic):
+    retriever = WikipediaRetriever(top_k_results=5)
+    docs = retriever.get_relevant_documents(topic)
+    return docs
     
-    cin >> n >> q;
-    
-    while ( q-- ) {
-        int cmd;
-        cin >> cmd;
-        if ( cmd == 1 ) {
-            int idx, val;
-            cin >> idx >> val;
-            fenwickTree_Update(idx, val);
-        } else if ( cmd == 2 ) {
-            int idx;
-            cin >> idx;
-            cout << fenwickTree_Sum(idx) << '\n';
-        }
-    }
-    return 0;
-}
+with st.sidebar:
+    docs = None
+    topic = None
+    file = None
+    choice = st.selectbox(
+        "Choose what you want to use.",
+        (
+            "File",
+            "Wikipedia Article",
+        ),
+    )
+    if choice == "File":
+        file = st.file_uploader(
+            "Upload a .docx, .txt, .pdf file", type=["pdf", "txt", "docx"]
+        )
+        if file:
+            docs = split_file(file)
+    else:
+        topic = st.text_input("Search Wikipedia")
+        if topic:
+            docs = wiki_search(topic)
+            
+if not docs:
+    st.markdown(
+        """
+        Welcome to QuizGPT.
+
+        I will make a quiz from Wikipedia articles or files you upload to test your knowledge and help you study.
+
+        Get Started by uploading a file or searching on Wikipedia in the sidebar.
+        """
+    )
+else:
+    response = run_quiz_chain(docs, topic if topic else file.name)
+    with st.form("questions_form"):
+        for question in response["questions"]:
+            st.write(question["question"])
+            value = st.radio(
+                "Select an options",
+                [answer["answer"] for answer in question["answers"]],
+                index=None,
+            )
+            if {"answer": value, "correct" : True} in question["answers"]:
+                st.success("Correct!")
+            elif value is not None:
+                for answer in question["answers"]:
+                    if answer["correct"] == True:
+                        st.error(answer["answer"])
+        button = st.form_submit_button()
 ```
-##### ❓ 예제 Input
-	8 8
-	1 3 10
-	1 2 5
-	1 5 5
-	1 8 7
-	2 3
-	2 5
-	3 4 5
-	3 1 8
-##### ⭐ 예제 Output
-	15
-	20
-	5
-	27
-#### ⌨️ Code(Range Update & Point Query)
-
-```cpp
-#include <bits/stdc++.h>
-
-using namespace std;
-
-int n, q, fenwickTree[100001];
-
-void fenwickTree_Update(int idx, int val) {
-    while ( idx <= n ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
-    }
-}
-
-int fenwickTree_Sum(int idx) {
-    int result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
-    }
-    return result;
-}
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL); cout.tie(NULL);
-    
-    cin >> n >> q;
-    while ( q-- ) {
-        int cmd;
-        cin >> cmd;
-        if ( cmd == 1 ) {
-            int l, r, val;
-            cin >> l >> r >> val;
-            fenwickTree_Update(l, val);
-            fenwickTree_Update(r+1, -val);
-        } else if ( cmd == 2 ) {
-            int idx;
-            cin >> idx;
-            cout << fenwickTree_Sum(idx) << '\n';
-        }
-    }
-    return 0;
-}
-```
-##### ❓ 예제 Input
-	8 7
-	1 1 5 10
-	2 5
-	1 2 2 5
-	2 2
-	1 1 8 7
-	2 1
-	2 2
-##### ⭐ 예제 Output
-	10
-	15
-	17
-	22
-# Fenwick Tree 응용문제
-### 📑[8217 - 유성](https://www.acmicpc.net/problem/8217)
-#### 🔓 KeyPoint
-- [[PBS(Parallel Binary Search)]]에 Fenwick Tree을 응용한 문제이다.
-- 구간의 합이 쿼리가 주어질 때 이를 이용하여 각 국가의 할당량이 몇 번째 쿼리가 될 때 채워지는지를 구하면 된다.
-- 각 국가마다 `특정 일(D) 안에 할당량을 채울 수 있는가?`라는 이분 탐색을 병렬로 진행하면 문제를 풀 수 있다.
-- 이분 탐색을 진행하는 과정에서 할당량을 구하기 위해 [[Lazy Segment Tree]]을 사용하게 되면 **시간 초과**기 된다.
-- 시간 초과를 해결하기 위해 Lazy가 아닌 Fenwick Tree를 이용하면 이를 해결할 수 있다.
-- Fenwick 중 구간의 합을 구하기기 때문에 Range Update & Point Query을 이용한다.
-- 구간은 끝이 이어져있는 **원형 형태**이기 때문에 이를 유의하여야 한다.
-#### ⌨️ Code
-```cpp
-#include <bits/stdc++.h>
-
-using namespace std;
-
-int n, m, q, countryQuota[300001];
-long long fenwickTree[300001];
-pair<int,int> queryRange[300001];
-tuple<bool,int,int,long long> query[300001];
-vector<int> countryArea[300001], queryMidValue[300001];
-
-void fenwickTree_Update(int idx, long long val) {
-    while ( idx <= m ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
-    }
-}
-
-long long fenwickTree_Sum(int idx) {
-    long long result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
-    }
-    return result;
-}
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL); cout.tie(NULL);
-    
-    cin >> n >> m;
-    for ( int i = 1; i <= m; i++ ) {
-        int num;
-        cin >> num;
-        countryArea[num].push_back(i);
-    }
-    
-    for ( int i = 1; i <= n; i++ ) cin >> countryQuota[i];
-    
-    cin >> q;
-    for ( int i = 1; i <= q; i++ ) {
-        int l, r;
-        long long a;
-        bool isLeftBiggerThanRight = false;
-        cin >> l >> r >> a;
-        if ( l > r ) {
-            isLeftBiggerThanRight = true;
-            swap(l, r);
-        }
-        query[i] = {isLeftBiggerThanRight, l, r, a};
-    }
-    
-    for ( int i = 1; i <= n; i++ ) {
-        queryRange[i].first = 1; queryRange[i].second = q + 1;
-    }
-    
-    while ( 1 ) {
-        bool flag = false;
-        memset(fenwickTree, 0, sizeof(fenwickTree));
-        
-        for ( int i = 0; i <= q; i++ ) queryMidValue[i].clear();
-        
-        for ( int i = 1; i <= n; i++ ) {
-            if ( queryRange[i].first < queryRange[i].second ) {
-                flag = true;
-                int mid = (queryRange[i].first + queryRange[i].second) / 2;
-                queryMidValue[mid].push_back(i);
-            }
-        }
-        
-        if ( !flag ) break;
-        
-        for ( int i = 1; i <= q; i++ ) {
-            bool isLeftBiggerThanRight = get<0>(query[i]);
-            int queryL = get<1>(query[i]);
-            int queryR = get<2>(query[i]);
-            long long queryVal = get<3>(query[i]);
-            
-            if ( isLeftBiggerThanRight ) {
-                fenwickTree_Update(1, queryVal);
-                fenwickTree_Update(queryL+1, -queryVal);
-                fenwickTree_Update(queryR, queryVal);
-            } else {
-                fenwickTree_Update(queryL, queryVal);
-                fenwickTree_Update(queryR + 1, -queryVal);
-            }
-            
-            for ( auto nodeIdx : queryMidValue[i] ) {
-                long long result = 0;
-                for ( auto node : countryArea[nodeIdx] ) {
-                    result += fenwickTree_Sum(node);
-                    if ( result >= countryQuota[nodeIdx] ) break;
-                }
-                if ( result >= countryQuota[nodeIdx] ) queryRange[nodeIdx].second = i;
-                else queryRange[nodeIdx].first = i+1;
-            }
-        }
-    }
-    
-    for ( int i = 1; i <= n; i++ ) {
-        if ( queryRange[i].first == q + 1 ) cout << "NIE\n";
-        else cout << queryRange[i].first << '\n';
-    }
-    return 0;
-}
-```
-### 📑[15957 - 음악추천](https://www.acmicpc.net/problem/15957)
-#### 🔓 KeyPoint
-- 마찬가지로 [[PBS(Parallel Binary Search)]]에서 Fenwick Tree를 응용하는 문제이다.
-- 문제의 조건이 매우 많고 복잡하기 때문에 여러 개의 틀로 문제를 나누어 푸는 것이 좋다.
-- 주어지는 값들이 Tree 형태로 주어져있고 해당 Tree에 구간의 합을 적용해야 하기 때문에 [[ETT(Euler Tour Technique)]]을 적용해야 한다.
-- 최종적으로 구하는 것이 **목표점수를 초과하는 시점** 이기 떄문에 각각의 가수들이 `특정 시점(K)에 목표 점수를 넘는가?`를 이분탐색 기준으로 잡고 이분 병렬 탐색을 진행하여야 한다.
-- Fenwick Tree에서 각 Point 값을 sum하는 과정에서 이미 목표 점수를 넘었으면 계산을 더 이상 하지 않고 값을 넘겨야 시간 초과를 방지할 수 있다.
-#### ⌨️ Code
-```cpp
-#include <bits/stdc++.h>
-#define maxLen 100001
-
-using namespace std;
-
-int n, k, ettCnt = 0, s[maxLen], e[maxLen], singers[maxLen], subTreeRoot[maxLen];
-long long j, queryWeight[maxLen], fenwickTree[maxLen];
-pair<int,int> queryRange[maxLen];
-vector<int> tree[maxLen], songsBasedSinger[maxLen], queryMidValue[maxLen];
-vector<pair<long long, int>> query;
-
-void fenwickTree_Update(int idx, long long val) {
-    while ( idx <= n ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
-    }
-}
-
-long long fenwickTree_Sum(int idx) {
-    long long result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
-    }
-    return result;
-}
-
-void ett(int node) {
-    s[node] = ++ettCnt;
-    for ( auto nNode : tree[node] ) {
-        if ( s[nNode] == 0 ) ett(nNode);
-    }
-    e[node] = ettCnt;
-}
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    
-    cin >> n >> k >> j;
-    for ( int i = 2; i <= n; i++ ) {
-        int root;
-        cin >> root;
-        tree[root].push_back(i);
-    }
-    
-    ett(1);
-    
-    for ( int i = 1; i <= n; i++ ) {
-        cin >> singers[i];
-        songsBasedSinger[singers[i]].push_back(i);
-    }
-    
-    query.push_back({-1, -1});
-    for ( int i = 1; i <= k; i++ ) {
-        long long dateTime;
-        cin >> dateTime >> subTreeRoot[i] >> queryWeight[i];
-        query.push_back({dateTime, i});
-    }
-    sort(query.begin(), query.end());
-    
-    for ( int i = 1; i <= k; i++ ) {
-        queryRange[i].first = ((int)songsBasedSinger[i].size() == 0 ) ? k+1 : 1;
-        queryRange[i].second = k+1;
-    }
-    
-    while ( 1 ) {
-        bool flag = false;
-        for ( int i = 1; i <= k; i++ ) queryMidValue[i].clear();
-        memset(fenwickTree, 0, sizeof(fenwickTree));
-        
-        for ( int i = 1; i <= k; i++ ) {
-            int l = queryRange[i].first, r = queryRange[i].second;
-            if ( l < r ) {
-                flag = true;
-                int mid = (l + r) / 2;
-                queryMidValue[mid].push_back(i);
-            }
-        }
-        
-        if ( !flag ) break;
-        
-        for ( int i = 1; i <= k; i++ ) {
-            int queryIdx = query[i].second;
-            int root = subTreeRoot[queryIdx];
-            long long weight = queryWeight[queryIdx];
-            
-            long long avgWeight = weight / (e[root] - s[root] + 1);
-            fenwickTree_Update(s[root], avgWeight);
-            fenwickTree_Update(e[root] + 1, -avgWeight);
-            
-            for ( auto singerIdx : queryMidValue[i] ) {
-                long long result = 0;
-                int songsCnt = (int)songsBasedSinger[singerIdx].size();
-                for ( auto song : songsBasedSinger[singerIdx] ) {
-                    result += fenwickTree_Sum(s[song]);
-                    if ( result > j * songsCnt ) break;
-                }
-                if ( result > j * songsCnt ) queryRange[singerIdx].second = i;
-                else queryRange[singerIdx].first = i+1;

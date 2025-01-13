@@ -1,3 +1,3 @@
 {
-  "mainFile": "./file/Study/Algorithm/Algorithm Content/Tree/Fenwick Tree.md"
+  "mainFile": "./file/Study/LangChain/LangChain Content/07_Quiz GPT/Quiz GPT.md"
 }

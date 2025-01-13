@@ -3,6 +3,26 @@ import streamlit as st
 import zipfile
 from modules.crewModules import Crews
 
+
+@st.cache_data(show_spinner="지정된 경로에 있는 모든 파일을 불러오고 있습니다...")
+def run_docPathCrew(file, extension_name):
+    docPathCrewResult = crews.run_docPathSearch(
+        extension_name=extension_name, file_path="./file"
+    )
+    return docPathCrewResult
+
+
+@st.cache_data(show_spinner="불러온 파일 중 키워드에 맞는 파일들을 찾고 있습니다...")
+def run_fileSelectCrew(file, extension_name, keyward, docPaths):
+    docPaths = []
+    for docPath in docPathCrewResult["filePaths"]:
+        if os.path.splitext(docPath)[1] == extension_name:
+            docPaths.append(docPath)
+
+    fileSelectCrewResult = crews.run_fileSelect(keyward, docPaths)
+    return fileSelectCrewResult
+
+
 st.set_page_config(
     page_title="Document Secretary",
     page_icon="🖥️",
@@ -61,7 +81,10 @@ if st.session_state["isSuccessFile"]:
                 "읽을 파일들의 확장자를 선택해주세요.",
                 (".pdf", ".txt", ".md", ".docx"),
             )
-            keyward = st.text_input("찾고 싶은 키워드를 입력해주세요.", placeholder="단어로 입력할수록 더 정확하게 찾을 수 있어요!")
+            keyward = st.text_input(
+                "찾고 싶은 키워드를 입력해주세요.",
+                placeholder="단어로 입력할수록 더 정확하게 찾을 수 있어요!",
+            )
 
             doc_search_button = st.form_submit_button(
                 "관련 문서 검색(비용이 발생하니 조심하세요!!)"
@@ -69,11 +92,9 @@ if st.session_state["isSuccessFile"]:
 
             if doc_search_button:
                 with st.status("파일을 불러오기...", expanded=True) as status:
-                    st.write("지정된 경로에 있는 모든 파일을 불러오고 있습니다...")
-                    docPathCrewResult = crews.run_docPathSearch(
-                        extension_name=extension_name, file_path="./file"
-                    )
-
+                    # 파일 경로 Load
+                    docPathCrewResult = run_docPathCrew(file, extension_name)
+                    st.write("모든 파일을 불러왔습니다.")
                     if docPathCrewResult == "Error":
                         status.update(
                             label="파일을 불러오는데 오류가 발생했습니다.",
@@ -81,16 +102,11 @@ if st.session_state["isSuccessFile"]:
                             state="error",
                         )
                     else:
-                        st.write(
-                            "불러온 파일 중 키워드에 맞는 파일들을 찾고 있습니다..."
+                        # 키워드에 맞는 관련 파일 찾기
+                        fileSelectCrewResult = run_fileSelectCrew(
+                            file, extension_name, keyward, docPathCrewResult
                         )
-                        docPaths = []
-                        for docPath in docPathCrewResult["filePaths"]:
-                            if os.path.splitext(docPath)[1] == extension_name:
-                                docPaths.append(docPath)
-
-                        fileSelectCrewResult = crews.run_fileSelect(keyward, docPaths)
-
+                        st.write("키워드에 맞는 파일들을 모두 찾았습니다.")
                         if fileSelectCrewResult == "Error":
                             status.update(
                                 label="파일을 불러오는데 오류가 발생했습니다.",
