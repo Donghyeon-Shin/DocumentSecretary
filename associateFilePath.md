@@ -1,9 +1,14 @@
 {
-  "mainFile": "./Study/LangChain/LangChain Content/02_Model IO/Output Parser.md",
   "relatedFiles": [
-    "./Study/LangChain/LangChain Content/02_Model IO/Prompt.md"
+    "./Study/Algorithm/Algorithm Content/Tree/Lazy Segment Tree.md",
+    "./Study/Algorithm/Algorithm Content/Tree/Segment Tree.md",
+    "./Study/Algorithm/Algorithm Content/Tree/Fenwick Tree.md",
+    "./Study/Algorithm/Algorithm Content/Tree/ETT(Euler Tour Technique).md",
+    "./Study/Algorithm/Algorithm Content/Query/PBS(Parallel Binary Search).md"
   ],
   "imageFiles": [
-    "./Study/LangChain/LangChain Content/02_Model IO/Expression language Input and Output.png"
+    "./file/Study/Algorithm/Algorithm Content/Fenwick Tree Struct Graph.svg",
+    "./file/Study/Algorithm/Algorithm Content/Fenwick Tree Partial Sum Graph.svg",
+    "./file/Study/Algorithm/Algorithm Content/Fenwick Tree Range Update & Point Query Graph.svg"
   ]
 }
