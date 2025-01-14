@@ -5,8 +5,8 @@
     "./Study/Algorithm/Algorithm Content/Tree/Fenwick Tree.md"
   ],
   "imageFiles": [
-    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Struct Graph.png",
-    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Partial Sum Graph.png",
-    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Range Update & Point Query Graph.png"
+    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Struct Graph.png",
+    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Partial Sum Graph.png",
+    "./file/Study/Algorithm/Reference/Tree Reference/Fenwick Tree Range Update & Point Query Graph.png"
   ]
 }

@@ -49,7 +49,7 @@ st.markdown(
     """
     환영합니다👍\n
     당신이 정리한 문서를 바탕으로 질문에 답을 하고 원하시면 문제도 만들어드릴게요!\n
-    'Side Bar'에 정리한 문서들을 ZIP 형태로 넣어주세요.\n
+    사이드 바에 정리한 문서들을 ZIP 형태로 넣어주세요.\n
     """
 )
 
@@ -73,6 +73,11 @@ if "filePaths" not in st.session_state:
 
 with st.sidebar:
     file = st.file_uploader("문서 경로를 지정해주세요.", type="zip")
+    if st.session_state["isLoadFile"]:
+        file_reset_button = st.button("파일 경로 RESET")
+        if file_reset_button:
+            st.session_state["isLoadFile"] = False
+            st.cache_data.clear()
 
     if file:
         with st.spinner(text="In progress..."):
@@ -85,6 +90,7 @@ with st.sidebar:
                     "파일을 Load 할 수 없습니다.\n 올바른 Zip 파일을 불러와주세요."
                 )
                 st.session_state["isSuccessFile"] = False
+                # 구현 해야 됨
     else:
         st.session_state["isSuccessFile"] = False
         st.session_state["isLoadFile"] = False
@@ -98,8 +104,9 @@ if st.session_state["isSuccessFile"]:
 
     with loadFile_tabs:
         if st.session_state["isLoadFile"]:
-            st.error("이미 파일을 로드하였어요!!")
-
+            st.error(
+                "이미 파일을 로드하였어요!!\n\n불러온 파일 경로는 수정하시려면 확장자를 변경하거나 사이드바에 있는 버튼을 눌러주세요.\n\n동일 파일 내의 검색을 하길 원하시면 키워드를 바꿔 검색해주세요."
+            )
         with st.form("file_option_form"):
             extension_name = st.selectbox(
                 "읽을 파일들의 확장자를 선택해주세요.",
@@ -147,14 +154,22 @@ if st.session_state["isSuccessFile"]:
                         else:
                             st.session_state["isLoadFile"] = True
                             st.session_state["mainFilePath"] = False
-                            st.session_state["relatedFilePaths"] = [False for i in range(len(fileSelectCrewResult["relatedFilePaths"]))]
-                            st.session_state["imagePaths"] = [False for i in range(len(fileSelectCrewResult["imagePaths"]))]
+                            st.session_state["relatedFilePaths"] = [
+                                False
+                                for i in range(
+                                    len(fileSelectCrewResult["relatedFilePaths"])
+                                )
+                            ]
+                            st.session_state["imagePaths"] = [
+                                False
+                                for i in range(len(fileSelectCrewResult["imagePaths"]))
+                            ]
                             status.update(label="파일을 불러왔습니다.", expanded=False)
                             st.session_state["filePaths"] = fileSelectCrewResult
 
         if st.session_state["filePaths"] != {}:
 
-            st.markdown("## 사용할 문서를 결졍해주세요!")
+            st.markdown("## 사용할 문서를 결정해주세요!")
             mainFilePath = st.session_state["filePaths"]["mainFilePath"]
             relatedFilePaths = st.session_state["filePaths"]["relatedFilePaths"]
             imagePaths = st.session_state["filePaths"]["imagePaths"]
@@ -164,12 +179,9 @@ if st.session_state["isSuccessFile"]:
             if mainFilePath == "No files are associated." or mainFilePath == []:
                 st.error("문서가 존재하지 않습니다.")
             else:
-                mainFileToggle = st.toggle(mainFilePath)
-
-                if mainFileToggle:
-                    st.session_state["mainFilePath"] = mainFilePath
-                else:
-                    st.session_state["mainFilePath"] = False
+                mainFile_name = mainFilePath.split("/")[-1]
+                st.markdown(mainFile_name)
+                st.session_state["mainFilePath"] = mainFilePath
             # 관련 문서 경로 설정
             st.write("관련 문서들")
             if relatedFilePaths == []:
@@ -177,7 +189,9 @@ if st.session_state["isSuccessFile"]:
             else:
                 relatedFilePathsToggles = []
                 for relatedFilePath in relatedFilePaths:
-                    relatedFilePathsToggles.append(st.toggle(relatedFilePath))
+                    file_name = relatedFilePath.split("/")[-1]
+                    if file_name != mainFile_name:
+                        relatedFilePathsToggles.append(st.toggle(file_name))
 
                 for i, relatedFilePathsToggle in enumerate(relatedFilePathsToggles):
                     if relatedFilePathsToggle:
@@ -191,17 +205,14 @@ if st.session_state["isSuccessFile"]:
             else:
                 imagePathsToggles = []
                 for imagePath in imagePaths:
-                    imagePathsToggles.append(st.toggle(imagePath))
+                    file_name = imagePath.split("/")[-1]
+                    imagePathsToggles.append(st.toggle(file_name))
 
                 for i, imagePathsToggle in enumerate(imagePathsToggles):
                     if imagePathsToggle:
                         st.session_state["imagePaths"][i] = imagePaths[i]
                     else:
                         st.session_state["imagePaths"][i] = False
-
-
-
-            
 
             st.session_state["mainFilePath"]
             st.session_state["relatedFilePaths"]
