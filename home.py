@@ -18,18 +18,22 @@ def preprocess_path(docPathsList, imgPathsList):
     return {"docPaths": docPaths, "imgPaths": imgPaths}
 
 
-@st.dialog("파일 목록")
+@st.dialog("파일 목록", width = "large")
 def view_all_file_path():
-    st.markdown("### 불러온 문서 목록")
-    with st.container(border=True):
-        for filePath in st.session_state["searchAllFilePaths"]["docPaths"]:
-            file_name = filePath.split("/")[-1]
-            st.write(file_name)
-    st.markdown("### 불러온 이미지 목록")
-    with st.container(border=True):    
-        for imgPath in st.session_state["searchAllFilePaths"]["imgPaths"]:
-            img_name = imgPath.split("/")[-1]
-            st.write(img_name)        
+    left, right = st.columns(2, vertical_alignment="top")
+
+    with left:
+        st.markdown("### 불러온 문서 목록")
+        with st.container(border=True):
+            for filePath in st.session_state["searchAllFilePaths"]["docPaths"]:
+                file_name = filePath.split("/")[-1]
+                st.write(file_name)
+    with right:
+        st.markdown("### 불러온 이미지 목록")
+        with st.container(border=True):    
+            for imgPath in st.session_state["searchAllFilePaths"]["imgPaths"]:
+                img_name = imgPath.split("/")[-1]
+                st.write(img_name)        
 
 
 @st.cache_data(show_spinner="지정된 경로에 있는 모든 파일을 불러오고 있습니다...")
@@ -65,7 +69,7 @@ st.markdown(
     """
     환영합니다👍\n
     당신이 정리한 문서를 바탕으로 질문에 답을 하고 원하시면 문제도 만들어드릴게요!\n
-    사이드 바에 정리한 문서들을 Zip 형태로 넣어주세요.\n
+    '사이드 바'에 정리한 문서들을 Zip 형태로 넣어주세요.\n
     """
 )
 
@@ -133,7 +137,7 @@ if st.session_state["isSuccessFile"]:
     with loadFile_tabs:
         if st.session_state["isLoadFile"]:
             st.error(
-                "이미 파일을 로드하였어요!!\n\n불러온 파일 경로는 수정하시려면 확장자를 변경하거나 사이드바에 있는 버튼을 눌러주세요.\n\n동일 파일 내의 검색을 하길 원하시면 키워드를 바꿔 검색해주세요."
+                "이미 파일을 로드하였어요!!\n\n불러온 파일 경로는 수정하시려면 확장자를 변경하거나 '사이드 바'에 있는 버튼을 눌러주세요.\n\n동일 파일 내의 검색을 하길 원하시면 키워드를 바꿔 검색해주세요."
             )
         with st.form("file_option_form"):
             extension_name = st.selectbox(
@@ -142,7 +146,7 @@ if st.session_state["isSuccessFile"]:
             )
             keyward = st.text_input(
                 "찾고 싶은 키워드를 입력해주세요.",
-                placeholder="단어로 입력할수록 더 정확하게 찾을 수 있어요!",
+                placeholder="단어로 입력하면 더 정확하게 찾을 수 있어요!",
             )
 
             doc_search_button = st.form_submit_button(
