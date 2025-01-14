@@ -1,57 +1,98 @@
 # Concept
-- `Binary Indexed Tree(BIT)`라고도 불린다.
-- [[Segment Tree]]의 변형 트리로 구간의 합을 빠르게 구할 수 있다는 특징이 있다.
-- 시간복잡도는 Segment Tree와 같은 `O(logN)`이지만 공간복잡도는 `O(n)`으로 Segment Tree보다 더 적다.
-- 시간복잡도 자체는 Segment Tree와 같다고 해도 실제론 조금 더 빠르게 작동하게 되는데 선형적으로 `Lazy Segment Tree ≒ 2 * Segment Tree / Segment Tree ≒ 2 * Fenwick Tree`이다.
-# Fenwick Tree 원리
-- Fenwick Tree는 Segment Tree에서 홀수 인덱스만 표기한다.(밑 그림 참조)
-- 모든 구간들은  BIT 연산을 통해 0이 아닌 최하위 비트(같은 높이의 맨좌측 비트)를 구함으로써 해결할 수 있다. 
-- 특정 비트(I)를 통해 최하위 비트를 구하는 공식은 `i & -i (-i = ~i + 1)`이다.
-- ex) i = (1101)2 -> ~i = (0010)2 -> -i = (0011)2 -> i & -i = (0001)2
-#### 🖼️Segment Tree와 Fenwick Tree 구조 비교
-![[Fenwick Tree Struct Graph.svg]]
-- Fenwick Tree에 필요한 기능은 크게 2가지가 있다.
-	1. sum(idx) : `[1~idx]` 범위에 있는 값들의 합을 Return 한다.
-	2. update(idx, val) :  배열의 idx번째와 해당 idx에 해당되는 모든 구간 값을 업데이트 한다.
-- 특정 비트(i)에 최하위 비트가 0이 되기 전까지 빼면 구간의 합을 구할 수 있다. `i -= (i & -i)`
-- 특정 비트(i)에 최하위 비트가 특정 값(m) 될 때까지 더하면 구간을 업데이트  할 수 있다. `i += (i & -i)`
-- 특정 구간 `[l,r]`의 합을 구하기 위해서 **sum(r) - sum(l-1)** 로 계산한다.
-- sum을 하는 과정은 오른쪽 대각선으로 올라가는 것이고, update는 왼쪽 위로 올라가는 과정으로 생각하면 이해하기 편하다.
-- Range Update 즉, `[l,r]` 의 값에 k를 더하기 하기 위해서 **update(l,k) , update(r+1, -k)** 료 계산한다.
-	- 이러한 계산은 Point Query`(array[idx])`를 편하게 구하기 위함이다.
-	- Point Query 을 구하기 위해선 단순히 sum(idx)을 구하면 된다.
-	- update(l,k)는 `[l,m]`까지의 모든 부분 합에 k를 더하기 된다. 
-	- update(r+1, -k)는 `[r+1,m]`까지의 모든 부분 합에 -k를 더하기 된다. 
-	- 두 개의 연산을 통해 `l~r`까지의 부분 합만 k가 더해지게 된다.
-#### 🖼️그림으로 이해하기(Partial Sum)
-![[Fenwick Tree Partial Sum Graph.svg]]
-#### 🖼️그림으로 이해하기(Range Update & Point Query)
-![[Fenwick Tree Range Update & Point Query Graph.svg]]
-# Fenwick Tree CODE
-- BIT 연산만 이해한다면 구현하는데 큰 어려움은 없다.
-- 부분 합과 구간 합을 잘 구별하며 구현하여야 한다.
-- Segment Tree보다 속도 측면에서 빠르지만 응용력이 떨어져 많은 문제에서 사용되진 않는다.
-#### ⌨️ Code(Partial sum)
+- `Tree`에 **Edge**을 'Heavy Edge'와 'Light Edge'로 나누어 구분하는 알고리즘이다.
+- 부모 Node(`u`)와 u의 자식 Node(`v`)를 있는 Edge(`e`)가 있을 때, v의 Sub Tree 크기가 u의 Sub Tree 크기의 1/2 이상일 때 `e`를 **Heavy Edge**라 정의하며 이 이외에는 모두 **Light Edge**이다.
+- `Size[Node] : Node의 Sub Tree 크기`라 정의하면 `Heavy Edge는 Size[v] >= Size[u] / 2`를 만족한다. 
+- 어떠한 Node에서 Light Edge을 타고 올라갈 경우 `무조건 Sub Tree의 크기가 2배 이상`이 되게 되며 이는 다시 말해 어떠한 Node에서 Root Node로 가는 경우 최대 **logN**개의 Light Edge을 거쳐가게 된다는 것을 뜻한다.
+- 특정 Node u와 v가 있을 때 그 둘을 잇는 Light Edge는 최대 **2 * logN**개 이다.
+- Edge를 각각 Heavy Edge와 Light Edge를 분리하여 **이어지는 Heavy Edge를 하나의 그룹**으로써 그리고 **Light Edge는 개별적인 그룹**으로써 값을 관리하면 `구간의 Edge`를 효율적으로 관리할 수 있다.
+- 쉽게 말해, Edge를 Heavy, Light로 나누고 이어지는 Heavy는 하나의 그룹으로 보면서 Node u와 v를 잇는 Edge들을 하나하나 보는 것이 아닌 각 `Edge 그룹` 별로 처리하는 알고리즘이다.
+- [[DFS(Depth-First Search)]]를 이용해 Edge를 Heavy Edge와 Light Edge로 나누기 때문에 `O(N)`의 시간복잡도가 소요된다.
+- 각각의 나누어진 Edge들은 구간 계산을 위해 [[Segment Tree]]을 이용하게 되며, `O(logN)`만큼의 시간복잡도가 소요된다.
+# HLD 원리
+- HLD의 구현은 크게 2가지이다.
+	1. Edge를 각각 Heavy Edge와 Light Edge로 나눈다.
+		>1.1 [[DFS(Depth-First Search)]] 이용해 `Root Node`부터 탐색을 시작해 각 노드들의 `Sub Tree의 Size`를 계산한다.
+		>1.2~3 DFS를 한 번 사용하여 Root Node부터 탐색을 시작해 Hevey Edge를 판별하고 [[ETT(Euler Tour Technique)]]을 이용해 각 Node(또는 Edge)의 구간을 정의한다.
+		>**구현의 편의성으로 위해 Heavy  Edge를 `Sub Node 중 가장 Sub Tree의 크기가 큰 노드로 이어진 Edge`로 정의한다.**
+	2. 나누어진 Edge를 토대로 구간 계산을 진행한다.
+		>2.1 [[Segment Tree]]을 이용해 Edge를 구간마다 업데이트를 진행한다.
+		>2.2 DFS로 나누어진 Edge와 ETT로 계산된 해당 Edge의 구간을 보면서 같은 그룹이 나올 때 까지 Light Edge의 구간 계산을 진행하며 해당 Edge를 건넌다.
+		>2.3 같은 그룹이라면 해당 Node들의 구간을 고려하여 구간 계산을 진행한다.
+		> (* [[LCA(Lowest Common Ancestor)]]로도 구현 가능하나, 개인적으로 코드가 복잡해 선호하진 않는다.)
+#### 🖼️그림으로 이해하기
+![[HLD Graph.svg]]
+# HLD CODE(📑[13510 - 트리와 쿼리 1](https://www.acmicpc.net/problem/13510))
+- 앞서 살펴봤듯이 HLD를 구현하기 위해서는 [[DFS(Depth-First Search)]], [[ETT(Euler Tour Technique)]], [[Segment Tree]]를  선행으로 알고 있어야 하기 때문에 난이도가 있는 알고리즘이다.
+- 코드를 보고 *Debug* 과정을 손으로 그리면서 생각해보는 것이 이해하는데 많은 도움이 될 것이다.
+- 처음 DFS를 하는 과정에서 Parent의 정보를 기록해 놓으면 후에 ETT를 계산하는 과정이나 Light Edge를 건너는 과정에서 활용할 수 있다.
+- 그룹(구간)의 편의성을 위해 Heavy Edge를 Edge Vector 맨 앞으로 위치 시킨다. 이렇게 하면 ETT을 계산하는 과정에서 *Heavy Edge의 번호가 연속성*을 가지게 되어 `Segement Tree`
+을 활용할 수 있게 된다. *(nNode와 maximumSubTreeNode의 주소를 Swap한다.)*
+- 해당 문제에서는 `s[node] = parent[node]와 node를 잇는 Edge의 번호`로 정의하기 때문에 `e[node]`를 구하긴 했지만 사용하지 않아도 문제를 해결 할 수 있다.
+- `head[node] = 같은 그룹의 가장 Depth가 낮은 node`로 Edge를 건너는 과정에서 활용되며 ETT를 구하는 과정에서 함께 구한다. *단 초기에 head[Root Node] = 전체 Tree의 Root Node로 init해야 한다.*
+#### ⌨️ Code
 ```cpp
 #include <bits/stdc++.h>
+#define MAX_SIZE 100001
 
 using namespace std;
 
-int n, q, fenwickTree[100001];
+int n, m, u[MAX_SIZE], v[MAX_SIZE], w[MAX_SIZE];
+int parent[MAX_SIZE] = {0, }, subTreeSize[MAX_SIZE] = {0, }, s[MAX_SIZE], e[MAX_SIZE], head[MAX_SIZE], range_Cnt = 0;
+vector<int> adj[MAX_SIZE], segment_Tree;
 
-void fenwickTree_Update(int idx, int val) {
-    while ( idx <= n ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
+int calcul_SubTreeSize(int node) {
+    subTreeSize[node] = 1;
+    for ( int& nNode : adj[node] ) {
+        if ( nNode == parent[node] ) continue;
+        parent[nNode] = node;
+        subTreeSize[node] += calcul_SubTreeSize(nNode);
+        int& maximumSubTreeNode = adj[node][0];
+        // 서브트리가 가장 큰 자식을 맨 앞으로 옮김 = segment_Tree를 연산할 때 무거운 번호 먼저 방문 하도록 설정
+        if ( maximumSubTreeNode == parent[node] || subTreeSize[maximumSubTreeNode] < subTreeSize[nNode] ) swap(maximumSubTreeNode, nNode);
     }
+    return subTreeSize[node];
 }
 
-int fenwickTree_Sum(int idx) {
-    int result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
+void hld(int node) {
+    s[node] = ++range_Cnt;
+    for ( int &nNode : adj[node] ) {
+        if ( nNode == parent[node] ) continue;
+        head[nNode] = (nNode == adj[node][0]) ? head[node] : nNode; // *무거운 경로(서브트리가 가장 큼)에 해당하면 head로 같이 묶고 아니면 가벼운 간선으로 만듦 
+        hld(nNode);
     }
+    e[node] = range_Cnt;
+}
+
+void update( int node, int start, int end, int target, int val ) {
+    if ( end < target || target < start ) return;
+    if ( start == end ) {
+        segment_Tree[node] = val;
+        return;
+    }
+    
+    int mid = (start + end) / 2;
+    update(node*2, start, mid, target, val);
+    update(node*2 + 1, mid + 1, end, target, val);
+    segment_Tree[node] = max(segment_Tree[node*2], segment_Tree[node*2+1]);
+}
+
+int calcul_MaximumEdgeWeight(int node, int start, int end, int left, int right) {
+    if ( end < left || right < start ) return 0;
+    if ( left <= start && end <= right ) return segment_Tree[node];
+    
+    int mid = (start + end) / 2;
+    return max(calcul_MaximumEdgeWeight(node*2, start, mid, left, right), calcul_MaximumEdgeWeight(node*2+1, mid + 1, end, left, right));
+}
+
+int query(int n1, int n2) {
+    int result = 0;
+    while ( head[n1] != head[n2] ) {
+        if ( subTreeSize[head[n1]] < subTreeSize[head[n2]] ) swap(n1, n2);
+        result = max(result, calcul_MaximumEdgeWeight(1, 1, n, s[head[n2]], s[n2]));
+        n2 = parent[head[n2]];
+    }
+    if ( s[n1] > s[n2] ) swap(n1, n2);
+    result = max(result, calcul_MaximumEdgeWeight(1, 1, n, s[n1] + 1, s[n2]));
     return result;
 }
 
@@ -59,62 +100,137 @@ int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(NULL); cout.tie(NULL);
     
-    cin >> n >> q;
+    cin >> n;
+    int height = int(ceil(log2(n)));
+    int tree_Size = (1 << (height + 1));
+    segment_Tree.resize(tree_Size);
     
-    while ( q-- ) {
-        int cmd;
-        cin >> cmd;
-        if ( cmd == 1 ) {
-            int idx, val;
-            cin >> idx >> val;
-            fenwickTree_Update(idx, val);
-        } else if ( cmd == 2 ) {
-            int idx;
-            cin >> idx;
-            cout << fenwickTree_Sum(idx) << '\n';
-        }
+    for ( int i = 1; i < n; i++ ) {
+        cin >> u[i] >> v[i] >> w[i];
+        adj[u[i]].push_back(v[i]);
+        adj[v[i]].push_back(u[i]);
+    }
+    
+    head[1] = 1; // head init of Root Node
+    calcul_SubTreeSize(1);
+    hld(1);
+    
+    for ( int i = 1; i < n; i++ ) {
+        if ( parent[u[i]] == v[i] ) swap(u[i], v[i]);
+        update(1, 1, n, s[v[i]], w[i]);
+    }
+    
+    cin >> m;
+    while ( m-- ) {
+        int q, a, b;
+        cin >> q >> a >> b;
+        if ( q == 1 ) {
+            if ( parent[u[a]] == v[a] ) swap(u[a], v[a]);
+            update(1, 1, n, s[v[a]], b);
+        } else cout << query(a, b) << '\n';
     }
     return 0;
 }
 ```
 ##### ❓ 예제 Input
-	8 8
-	1 3 10
+	11
 	1 2 5
-	1 5 5
-	1 8 7
-	2 3
-	2 5
-	3 4 5
-	3 1 8
+	2 3 3
+	3 5 18
+	3 6 21
+	2 4 1
+	1 7 7
+	7 8 2
+	8 9 3
+	8 10 9
+	10 11 13
+	4
+	2 8 11
+	2 3 10
+	1 5 100
+	2 11 4
 ##### ⭐ 예제 Output
-	15
-	20
-	5
-	27
-#### ⌨️ Code(Range Update & Point Query)
-
+	13
+	9
+	100
+# HLD 응용문제
+### 📑[13309 - 트리](https://www.acmicpc.net/problem/13309)
+#### 🔓 KeyPoint
+- 예제(📑[13510 - 트리와 쿼리 1](https://www.acmicpc.net/problem/13510))에서 본 문제랑 근본은 같다.
+- 두 Node 사이를 연결하는 Edge가 존재하는지 판단하기 위해 `Bool 타입`에 Segment Tree 구현한다.
+- 모든 간선이 연결되어 있기 때문에 처음 Segment Tree는 모두 1(True)로 초기화한다.
+- Edge를 제거할 때는 해당 Edge의 번호를 0으로 업데이트 하면 된다.
+- 두 노드의 구간에 대해서 Segment Tree의 값이 `1`이 나오면 두 노드를 잇는 Edge가 존재하는 것이고 `0`이 나오면 없는 것이다.
+#### ⌨️ Code
 ```cpp
 #include <bits/stdc++.h>
+#define MAX_SIZE 200001
+
 
 using namespace std;
 
-int n, q, fenwickTree[100001];
+int n, q, head[MAX_SIZE] = {0, }, subTreeSize[MAX_SIZE] = {0 }, parent[MAX_SIZE] = {0, }, s[MAX_SIZE], e[MAX_SIZE], rangeCnt = 0;
+vector<int> adj[MAX_SIZE], boolSegmentTree;
 
-void fenwickTree_Update(int idx, int val) {
-    while ( idx <= n ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
+int calcul_SubTreeSize(int node) {
+    subTreeSize[node] = 1;
+    for ( int& nNode : adj[node] ) {
+        if ( nNode == parent[node] ) continue;
+        parent[nNode] = node;
+        subTreeSize[node] += calcul_SubTreeSize(nNode);
+        int& maximumSubTreeNode = adj[node][0];
+        if ( maximumSubTreeNode == parent[node] || subTreeSize[maximumSubTreeNode] < subTreeSize[nNode] ) swap(maximumSubTreeNode, nNode);
     }
+    return subTreeSize[node];
+}
+void hld(int node) {
+    s[node] = ++rangeCnt;
+    for ( auto nNode : adj[node] ) {
+        if ( nNode == parent[node] ) continue;
+        head[nNode] = (nNode == adj[node][0]) ? head[node] : nNode;
+        hld(nNode);
+    }
+    e[node] = rangeCnt;
 }
 
-int fenwickTree_Sum(int idx) {
-    int result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
+bool init(int node, int start, int end) {
+    if ( start == end ) return boolSegmentTree[node] = 1;
+    int mid = (start + end) / 2;
+    return boolSegmentTree[node] = (init(node*2, start, mid) && init(node*2 + 1, mid + 1, end));
+}
+
+bool calcul_Connect(int node, int start, int end, int left, int right) {
+    if ( end < left || right < start ) return 1;
+    if ( left <= start && end <= right ) return boolSegmentTree[node];
+    
+    int mid = (start + end) / 2;
+    return (calcul_Connect(node*2, start, mid, left, right) && calcul_Connect(node*2 + 1, mid + 1, end, left, right));
+}
+
+bool IsConnectedTwoNodes(int n1, int n2) {
+    bool result = 1;
+    while ( head[n1] != head[n2] ) {
+        if ( subTreeSize[head[n1]] < subTreeSize[head[n2]] ) swap(n1, n2);
+        result &= calcul_Connect(1, 1, n, s[head[n2]], s[n2]);
+        n2 = parent[head[n2]];
+        
     }
+    if ( s[n1] > s[n2] ) swap(n1, n2);
+    result &= calcul_Connect(1, 1, n, s[n1] + 1, s[n2]);
     return result;
+}
+
+void removeEdgeInSegmentTree(int node, int start, int end, int target) {
+    if ( end < target || target < start ) return;
+    if ( start == end ) {
+        boolSegmentTree[node] = 0;
+        return;
+    }
+    
+    int mid = (start + end) / 2;
+    removeEdgeInSegmentTree(node*2, start, mid, target);
+    removeEdgeInSegmentTree(node*2 + 1, mid + 1, end, target);
+    boolSegmentTree[node] = (boolSegmentTree[node*2] && boolSegmentTree[node*2 + 1]);
 }
 
 int main() {
@@ -122,266 +238,36 @@ int main() {
     cin.tie(NULL); cout.tie(NULL);
     
     cin >> n >> q;
-    while ( q-- ) {
-        int cmd;
-        cin >> cmd;
-        if ( cmd == 1 ) {
-            int l, r, val;
-            cin >> l >> r >> val;
-            fenwickTree_Update(l, val);
-            fenwickTree_Update(r+1, -val);
-        } else if ( cmd == 2 ) {
-            int idx;
-            cin >> idx;
-            cout << fenwickTree_Sum(idx) << '\n';
-        }
-    }
-    return 0;
-}
-```
-##### ❓ 예제 Input
-	8 7
-	1 1 5 10
-	2 5
-	1 2 2 5
-	2 2
-	1 1 8 7
-	2 1
-	2 2
-##### ⭐ 예제 Output
-	10
-	15
-	17
-	22
-# Fenwick Tree 응용문제
-### 📑[8217 - 유성](https://www.acmicpc.net/problem/8217)
-#### 🔓 KeyPoint
-- [[PBS(Parallel Binary Search)]]에 Fenwick Tree을 응용한 문제이다.
-- 구간의 합이 쿼리가 주어질 때 이를 이용하여 각 국가의 할당량이 몇 번째 쿼리가 될 때 채워지는지를 구하면 된다.
-- 각 국가마다 `특정 일(D) 안에 할당량을 채울 수 있는가?`라는 이분 탐색을 병렬로 진행하면 문제를 풀 수 있다.
-- 이분 탐색을 진행하는 과정에서 할당량을 구하기 위해 [[Lazy Segment Tree]]을 사용하게 되면 **시간 초과**기 된다.
-- 시간 초과를 해결하기 위해 Lazy가 아닌 Fenwick Tree를 이용하면 이를 해결할 수 있다.
-- Fenwick 중 구간의 합을 구하기기 때문에 Range Update & Point Query을 이용한다.
-#### ⌨️ Code
-```cpp
-#include <bits/stdc++.h>
-
-using namespace std;
-
-int n, m, q, countryQuota[300001];
-long long fenwickTree[300001];
-pair<int,int> queryRange[300001];
-tuple<bool,int,int,long long> query[300001];
-vector<int> countryArea[300001], queryMidValue[300001];
-
-void fenwickTree_Update(int idx, long long val) {
-    while ( idx <= m ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
-    }
-}
-
-long long fenwickTree_Sum(int idx) {
-    long long result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
-    }
-    return result;
-}
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL); cout.tie(NULL);
     
-    cin >> n >> m;
-    for ( int i = 1; i <= m; i++ ) {
-        int num;
-        cin >> num;
-        countryArea[num].push_back(i);
-    }
+    int height = int(ceil(log2(n)));
+    int tree_Size = ( 1 << (height + 1));
+    boolSegmentTree.resize(tree_Size);
     
-    for ( int i = 1; i <= n; i++ ) cin >> countryQuota[i];
-    
-    cin >> q;
-    for ( int i = 1; i <= q; i++ ) {
-        int l, r;
-        long long a;
-        bool isLeftBiggerThanRight = false;
-        cin >> l >> r >> a;
-        if ( l > r ) {
-            isLeftBiggerThanRight = true;
-            swap(l, r);
-        }
-        query[i] = {isLeftBiggerThanRight, l, r, a};
-    }
-    
-    for ( int i = 1; i <= n; i++ ) {
-        queryRange[i].first = 1; queryRange[i].second = q + 1;
-    }
-    
-    while ( 1 ) {
-        bool flag = false;
-        memset(fenwickTree, 0, sizeof(fenwickTree));
-        
-        for ( int i = 0; i <= q; i++ ) queryMidValue[i].clear();
-        
-        for ( int i = 1; i <= n; i++ ) {
-            if ( queryRange[i].first < queryRange[i].second ) {
-                flag = true;
-                int mid = (queryRange[i].first + queryRange[i].second) / 2;
-                queryMidValue[mid].push_back(i);
-            }
-        }
-        
-        if ( !flag ) break;
-        
-        for ( int i = 1; i <= q; i++ ) {
-            bool isLeftBiggerThanRight = get<0>(query[i]);
-            int queryL = get<1>(query[i]);
-            int queryR = get<2>(query[i]);
-            long long queryVal = get<3>(query[i]);
-            
-            if ( isLeftBiggerThanRight ) {
-                fenwickTree_Update(1, queryVal);
-                fenwickTree_Update(queryL+1, -queryVal);
-                fenwickTree_Update(queryR, queryVal);
-            } else {
-                fenwickTree_Update(queryL, queryVal);
-                fenwickTree_Update(queryR + 1, -queryVal);
-            }
-            
-            for ( auto nodeIdx : queryMidValue[i] ) {
-                long long result = 0;
-                for ( auto node : countryArea[nodeIdx] ) {
-                    result += fenwickTree_Sum(node);
-                    if ( result >= countryQuota[nodeIdx] ) break;
-                }
-                if ( result >= countryQuota[nodeIdx] ) queryRange[nodeIdx].second = i;
-                else queryRange[nodeIdx].first = i+1;
-            }
-        }
-    }
-    
-    for ( int i = 1; i <= n; i++ ) {
-        if ( queryRange[i].first == q + 1 ) cout << "NIE\n";
-        else cout << queryRange[i].first << '\n';
-    }
-    return 0;
-}
-```
-### 📑[15957 - 음악추천](https://www.acmicpc.net/problem/15957)
-#### 🔓 KeyPoint
-- 마찬가지로 [[PBS(Parallel Binary Search)]]에서 Fenwick Tree를 응용하는 문제이다.
-- 문제의 조건이 매우 많고 복잡하기 때문에 여러 개의 틀로 문제를 나누어 푸는 것이 좋다.
-- 주어지는 값들이 Tree 형태로 주어져있고 해당 Tree에 구간의 합을 적용해야 하기 때문에 [[ETT(Euler Tour Technique)]]을 적용해야 한다.
-- 최종적으로 구하는 것이 **목표점수를 초과하는 시점** 이기 떄문에 각각의 가수들이 `특정 시점(K)에 목표 점수를 넘는가?`를 이분탐색 기준으로 잡고 이분 병렬 탐색을 진행하여야 한다.
-- Fenwick Tree에서 각 Point 값을 sum하는 과정에서 이미 목표 점수를 넘었으면 계산을 더 이상 하지 않고 값을 넘겨야 시간 초과를 방지할 수 있다.
-#### ⌨️ Code
-```cpp
-#include <bits/stdc++.h>
-#define maxLen 100001
-
-using namespace std;
-
-int n, k, ettCnt = 0, s[maxLen], e[maxLen], singers[maxLen], subTreeRoot[maxLen];
-long long j, queryWeight[maxLen], fenwickTree[maxLen];
-pair<int,int> queryRange[maxLen];
-vector<int> tree[maxLen], songsBasedSinger[maxLen], queryMidValue[maxLen];
-vector<pair<long long, int>> query;
-
-void fenwickTree_Update(int idx, long long val) {
-    while ( idx <= n ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
-    }
-}
-
-long long fenwickTree_Sum(int idx) {
-    long long result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
-    }
-    return result;
-}
-
-void ett(int node) {
-    s[node] = ++ettCnt;
-    for ( auto nNode : tree[node] ) {
-        if ( s[nNode] == 0 ) ett(nNode);
-    }
-    e[node] = ettCnt;
-}
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    
-    cin >> n >> k >> j;
     for ( int i = 2; i <= n; i++ ) {
-        int root;
-        cin >> root;
-        tree[root].push_back(i);
+        int node;
+        cin >> node;
+        adj[node].push_back(i);
+        adj[i].push_back(node);
     }
     
-    ett(1);
-    
-    for ( int i = 1; i <= n; i++ ) {
-        cin >> singers[i];
-        songsBasedSinger[singers[i]].push_back(i);
-    }
-    
-    query.push_back({-1, -1});
-    for ( int i = 1; i <= k; i++ ) {
-        long long dateTime;
-        cin >> dateTime >> subTreeRoot[i] >> queryWeight[i];
-        query.push_back({dateTime, i});
-    }
-    sort(query.begin(), query.end());
-    
-    for ( int i = 1; i <= k; i++ ) {
-        queryRange[i].first = ((int)songsBasedSinger[i].size() == 0 ) ? k+1 : 1;
-        queryRange[i].second = k+1;
-    }
-    
-    while ( 1 ) {
-        bool flag = false;
-        for ( int i = 1; i <= k; i++ ) queryMidValue[i].clear();
-        memset(fenwickTree, 0, sizeof(fenwickTree));
+    head[1] = 1;
+    calcul_SubTreeSize(1);
+    hld(1);
+    init(1, 1, n);
+
+    while ( q-- ) {
+        int v1, v2;
+        bool IsRemoveEdge;
         
-        for ( int i = 1; i <= k; i++ ) {
-            int l = queryRange[i].first, r = queryRange[i].second;
-            if ( l < r ) {
-                flag = true;
-                int mid = (l + r) / 2;
-                queryMidValue[mid].push_back(i);
-            }
-        }
-        
-        if ( !flag ) break;
-        
-        for ( int i = 1; i <= k; i++ ) {
-            int queryIdx = query[i].second;
-            int root = subTreeRoot[queryIdx];
-            long long weight = queryWeight[queryIdx];
-            
-            long long avgWeight = weight / (e[root] - s[root] + 1);
-            fenwickTree_Update(s[root], avgWeight);
-            fenwickTree_Update(e[root] + 1, -avgWeight);
-            
-            for ( auto singerIdx : queryMidValue[i] ) {
-                long long result = 0;
-                int songsCnt = (int)songsBasedSinger[singerIdx].size();
-                for ( auto song : songsBasedSinger[singerIdx] ) {
-                    result += fenwickTree_Sum(s[song]);
-                    if ( result > j * songsCnt ) break;
-                }
-                if ( result > j * songsCnt ) queryRange[singerIdx].second = i;
-                else queryRange[singerIdx].first = i+1;
-            }
+        cin >> v1 >> v2 >> IsRemoveEdge;
+        if ( IsConnectedTwoNodes(v1, v2) ) {
+            cout << "YES\n";
+            if ( IsRemoveEdge ) removeEdgeInSegmentTree(1, 1, n, s[v1]);
+        } else {
+            cout << "NO\n";
+            if ( IsRemoveEdge ) removeEdgeInSegmentTree(1, 1, n, s[v2]);
         }
     }
-    
-    for ( int i = 1; i <= n; i++ ) {
-        int queryIdx = queryRange[singers[i]].first;
+    return 0;
+}
+```

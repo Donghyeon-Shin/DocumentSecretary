@@ -4,6 +4,34 @@ import zipfile
 from modules.crewModules import Crews
 
 
+def preprocess_path(docPathsList, imgPathsList):
+    docPaths = []
+    imgPaths = []
+
+    for docPath in docPathsList:
+        if os.path.splitext(docPath)[1] == extension_name:
+            docPaths.append(docPath)
+
+    for imgPath in imgPathsList:
+        if os.path.splitext(imgPath)[1] != ".svg":
+            imgPaths.append(imgPath)
+    return {"docPaths": docPaths, "imgPaths": imgPaths}
+
+
+@st.dialog("파일 목록")
+def view_all_file_path():
+    st.markdown("### 불러온 문서 목록")
+    with st.container(border=True):
+        for filePath in st.session_state["searchAllFilePaths"]["docPaths"]:
+            file_name = filePath.split("/")[-1]
+            st.write(file_name)
+    st.markdown("### 불러온 이미지 목록")
+    with st.container(border=True):    
+        for imgPath in st.session_state["searchAllFilePaths"]["imgPaths"]:
+            img_name = imgPath.split("/")[-1]
+            st.write(img_name)        
+
+
 @st.cache_data(show_spinner="지정된 경로에 있는 모든 파일을 불러오고 있습니다...")
 def run_docPathCrew(file, extension_name):
     docPathCrewResult = crews.run_docPathSearch(
@@ -21,19 +49,7 @@ def run_imgPathCrew(file):
 
 
 @st.cache_data(show_spinner="불러온 파일 중 키워드에 맞는 파일들을 찾고 있습니다...")
-def run_fileSelectCrew(
-    file, extension_name, keyward, docPathCrewResult, imgPathCrewResult
-):
-    docPaths = []
-    imgPaths = []
-    for docPath in docPathCrewResult["filePaths"]:
-        if os.path.splitext(docPath)[1] == extension_name:
-            docPaths.append(docPath)
-
-    for imgPath in imgPathCrewResult["filePaths"]:
-        if os.path.splitext(imgPath)[1] != ".svg":
-            imgPaths.append(imgPath)
-
+def run_fileSelectCrew(file, extension_name, keyward, docPaths, imgPaths):
     fileSelectCrewResult = crews.run_fileSelect(keyward, docPaths, imgPaths)
     return fileSelectCrewResult
 
@@ -49,7 +65,7 @@ st.markdown(
     """
     환영합니다👍\n
     당신이 정리한 문서를 바탕으로 질문에 답을 하고 원하시면 문제도 만들어드릴게요!\n
-    사이드 바에 정리한 문서들을 ZIP 형태로 넣어주세요.\n
+    사이드 바에 정리한 문서들을 Zip 형태로 넣어주세요.\n
     """
 )
 
@@ -68,12 +84,23 @@ if "isSuccessFile" not in st.session_state:
 if "isLoadFile" not in st.session_state:
     st.session_state["isLoadFile"] = False
 
-if "filePaths" not in st.session_state:
-    st.session_state["filePaths"] = {}
+if "searchAllFilePaths" not in st.session_state:
+    st.session_state["searchAllFilePaths"] = {}
+
+if "associatedFilePaths" not in st.session_state:
+    st.session_state["associatedFilePaths"] = {}
 
 with st.sidebar:
+    with st.expander("OpenAI API KEY"):
+        openAI_API_KEY = st.text_input("OpenAI API KEY 입력")
     file = st.file_uploader("문서 경로를 지정해주세요.", type="zip")
     if st.session_state["isLoadFile"]:
+        view_all_file_path_button = st.button("불러온 파일들 보기")
+        if view_all_file_path_button:
+            if st.session_state["searchAllFilePaths"] == {}:
+                st.error("관련된 파일이 존재하지 않습니다..!")
+            else:
+                view_all_file_path()
         file_reset_button = st.button("파일 경로 RESET")
         if file_reset_button:
             st.session_state["isLoadFile"] = False
@@ -94,7 +121,8 @@ with st.sidebar:
     else:
         st.session_state["isSuccessFile"] = False
         st.session_state["isLoadFile"] = False
-        st.session_state["filePaths"] = {}
+        st.session_state["searchAllFilePaths"] = {}
+        st.session_state["associatedFilePaths"] = {}
 
 if st.session_state["isSuccessFile"]:
     crews = Crews()
@@ -137,12 +165,17 @@ if st.session_state["isSuccessFile"]:
                         )
                     else:
                         # 키워드에 맞는 관련 파일 찾기
+                        st.session_state["searchAllFilePaths"] = preprocess_path(
+                            docPathCrewResult["filePaths"],
+                            imgPathCrewResult["filePaths"],
+                        )
+
                         fileSelectCrewResult = run_fileSelectCrew(
                             file,
                             extension_name,
                             keyward,
-                            docPathCrewResult,
-                            imgPathCrewResult,
+                            st.session_state["searchAllFilePaths"]["docPaths"],
+                            st.session_state["searchAllFilePaths"]["imgPaths"],
                         )
                         st.write("키워드에 맞는 파일들을 모두 찾았습니다.")
                         if fileSelectCrewResult == "Error":
@@ -165,54 +198,61 @@ if st.session_state["isSuccessFile"]:
                                 for i in range(len(fileSelectCrewResult["imagePaths"]))
                             ]
                             status.update(label="파일을 불러왔습니다.", expanded=False)
-                            st.session_state["filePaths"] = fileSelectCrewResult
+                            st.session_state["associatedFilePaths"] = (
+                                fileSelectCrewResult
+                            )
+                            st.rerun()
 
-        if st.session_state["filePaths"] != {}:
-
+        if st.session_state["associatedFilePaths"] != {}:
             st.markdown("## 사용할 문서를 결정해주세요!")
-            mainFilePath = st.session_state["filePaths"]["mainFilePath"]
-            relatedFilePaths = st.session_state["filePaths"]["relatedFilePaths"]
-            imagePaths = st.session_state["filePaths"]["imagePaths"]
+            with st.container(border=True):
+                mainFilePath = st.session_state["associatedFilePaths"]["mainFilePath"]
+                relatedFilePaths = st.session_state["associatedFilePaths"][
+                    "relatedFilePaths"
+                ]
+                imagePaths = st.session_state["associatedFilePaths"]["imagePaths"]
 
-            # 핵심 문서 경로 설정
-            st.write("핵심 문서")
-            if mainFilePath == "No files are associated." or mainFilePath == []:
-                st.error("문서가 존재하지 않습니다.")
-            else:
-                mainFile_name = mainFilePath.split("/")[-1]
-                st.markdown(mainFile_name)
-                st.session_state["mainFilePath"] = mainFilePath
-            # 관련 문서 경로 설정
-            st.write("관련 문서들")
-            if relatedFilePaths == []:
-                st.error("문서가 존재하지 않습니다.")
-            else:
-                relatedFilePathsToggles = []
-                for relatedFilePath in relatedFilePaths:
-                    file_name = relatedFilePath.split("/")[-1]
-                    if file_name != mainFile_name:
-                        relatedFilePathsToggles.append(st.toggle(file_name))
+                # 핵심 문서 경로 설정
+                st.markdown("##### 핵심 문서")
+                if mainFilePath == "No files are associated." or mainFilePath == []:
+                    st.error("문서가 존재하지 않습니다.")
+                else:
+                    mainFile_name = mainFilePath.split("/")[-1]
+                    st.markdown(mainFile_name)
+                    st.session_state["mainFilePath"] = mainFilePath
+                # 관련 문서 경로 설정
+                st.markdown("##### 관련 문서들")
+                if relatedFilePaths == []:
+                    st.error("문서가 존재하지 않습니다.")
+                else:
+                    relatedFilePathsToggles = []
+                    for relatedFilePath in relatedFilePaths:
+                        file_name = relatedFilePath.split("/")[-1]
+                        if file_name != mainFile_name:
+                            relatedFilePathsToggles.append(st.toggle(file_name))
 
-                for i, relatedFilePathsToggle in enumerate(relatedFilePathsToggles):
-                    if relatedFilePathsToggle:
-                        st.session_state["relatedFilePaths"][i] = relatedFilePaths[i]
-                    else:
-                        st.session_state["relatedFilePaths"][i] = False
-            # 이미지 경로 설정
-            st.write("관련 이미지들")
-            if imagePaths == []:
-                st.error("이미지가 존재하지 않습니다.")
-            else:
-                imagePathsToggles = []
-                for imagePath in imagePaths:
-                    file_name = imagePath.split("/")[-1]
-                    imagePathsToggles.append(st.toggle(file_name))
+                    for i, relatedFilePathsToggle in enumerate(relatedFilePathsToggles):
+                        if relatedFilePathsToggle:
+                            st.session_state["relatedFilePaths"][i] = relatedFilePaths[
+                                i
+                            ]
+                        else:
+                            st.session_state["relatedFilePaths"][i] = False
+                # 이미지 경로 설정
+                st.markdown("##### 관련 이미지들")
+                if imagePaths == []:
+                    st.error("이미지가 존재하지 않습니다.")
+                else:
+                    imagePathsToggles = []
+                    for imagePath in imagePaths:
+                        file_name = imagePath.split("/")[-1]
+                        imagePathsToggles.append(st.toggle(file_name))
 
-                for i, imagePathsToggle in enumerate(imagePathsToggles):
-                    if imagePathsToggle:
-                        st.session_state["imagePaths"][i] = imagePaths[i]
-                    else:
-                        st.session_state["imagePaths"][i] = False
+                    for i, imagePathsToggle in enumerate(imagePathsToggles):
+                        if imagePathsToggle:
+                            st.session_state["imagePaths"][i] = imagePaths[i]
+                        else:
+                            st.session_state["imagePaths"][i] = False
 
             st.session_state["mainFilePath"]
             st.session_state["relatedFilePaths"]
