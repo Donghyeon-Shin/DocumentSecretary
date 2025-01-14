@@ -3,6 +3,7 @@ import streamlit as st
 import zipfile
 from modules.crewModules import Crews
 from modules.utilles import paint_history, send_message, clear_session_message
+from modules.chainModules import Chains
 
 def preprocess_path(docPathsList, imgPathsList):
     docPaths = []
@@ -266,6 +267,7 @@ if st.session_state["isSuccessFile"]:
     with qna_tab:
         response_container = st.container(height=800)
         input_container = st.container()
+        chains = Chains()
         
         with response_container:
             paint_history()
@@ -274,4 +276,7 @@ if st.session_state["isSuccessFile"]:
         with response_container:
             if question:
                 send_message(question, "human")
-                send_message("aa", "ai")
+                with st.spinner("질문에 대한 답을 만들고 있습니다...."):
+                    result = chains.run_RAG_chain(st.session_state["mainFilePath"], question)
+                    print(result)
+                    send_message(result, "ai")

@@ -1,6 +1,5 @@
 {
   "filePaths": [
-    "./file/logo.png",
     "./file/Study/Algorithm/Reference/BAEKJOON.png",
     "./file/Study/Algorithm/Reference/Array Reference/Binary Search Ref/Binary Search Flowchart.png",
     "./file/Study/Algorithm/Reference/Array Reference/MITM Recursion Ref/MITM Recursion.png",

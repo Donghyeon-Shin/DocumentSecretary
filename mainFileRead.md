@@ -21,7 +21,7 @@
 	- 이러한 계산은 Point Query`(array[idx])`를 편하게 구하기 위함이다.
 	- Point Query 을 구하기 위해선 단순히 sum(idx)을 구하면 된다.
 	- update(l,k)는 `[l,m]`까지의 모든 부분 합에 k를 더하기 된다. 
-	- update(r+1, -k)는 `[r+1,m]`까지의 모든 부분 합에 -k를 더하기 된다. 
+	- update(r+1, -k)는 `[r+1,m]까지의 모든 부분 합에 -k를 더하기 된다. 
 	- 두 개의 연산을 통해 `l~r`까지의 부분 합만 k가 더해지게 된다.
 #### 🖼️그림으로 이해하기(Partial Sum)
 ![[Fenwick Tree Partial Sum Graph.svg]]
@@ -162,7 +162,6 @@ int main() {
 - 이분 탐색을 진행하는 과정에서 할당량을 구하기 위해 [[Lazy Segment Tree]]을 사용하게 되면 **시간 초과**기 된다.
 - 시간 초과를 해결하기 위해 Lazy가 아닌 Fenwick Tree를 이용하면 이를 해결할 수 있다.
 - Fenwick 중 구간의 합을 구하기기 때문에 Range Update & Point Query을 이용한다.
-- 구간은 끝이 이어져있는 **원형 형태**이기 때문에 이를 유의하여야 한다.
 #### ⌨️ Code
 ```cpp
 #include <bits/stdc++.h>
@@ -380,3 +379,10 @@ int main() {
                 }
                 if ( result > j * songsCnt ) queryRange[singerIdx].second = i;
                 else queryRange[singerIdx].first = i+1;
+            }
+        }
+    }
+    
+    for ( int i = 1; i <= n; i++ ) {
+        int queryIdx = queryRange[singers[i]].first;
+        if

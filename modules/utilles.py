@@ -3,6 +3,7 @@ import streamlit as st
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
+
 def paint_history():
     for message in st.session_state["messages"]:
         send_message(message["message"], message["role"], False)
