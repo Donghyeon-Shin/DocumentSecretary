@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import zipfile
 from modules.crewModules import Crews
-
+from modules.utilles import paint_history, send_message, clear_session_message
 
 def preprocess_path(docPathsList, imgPathsList):
     docPaths = []
@@ -59,11 +59,11 @@ def run_fileSelectCrew(file, extension_name, keyward, docPaths, imgPaths):
 
 
 st.set_page_config(
-    page_title="Document Secretary",
+    page_title="Document J.A.R.V.I.S.",
     page_icon="🖥️",
 )
 
-st.title("Document Secretary")
+st.title("Document J.A.R.V.I.S.")
 
 st.markdown(
     """
@@ -93,6 +93,7 @@ if "searchAllFilePaths" not in st.session_state:
 
 if "associatedFilePaths" not in st.session_state:
     st.session_state["associatedFilePaths"] = {}
+
 
 with st.sidebar:
     with st.expander("OpenAI API KEY"):
@@ -127,10 +128,11 @@ with st.sidebar:
         st.session_state["isLoadFile"] = False
         st.session_state["searchAllFilePaths"] = {}
         st.session_state["associatedFilePaths"] = {}
+        clear_session_message()
 
 if st.session_state["isSuccessFile"]:
     crews = Crews()
-    loadFile_tabs, summary_tabs, quiz_tabs = st.tabs(
+    loadFile_tabs, qna_tab , quiz_tabs = st.tabs(
         ["파일 불러오기", "질문하기", "문제 만들기"]
     )
 
@@ -261,3 +263,15 @@ if st.session_state["isSuccessFile"]:
             st.session_state["mainFilePath"]
             st.session_state["relatedFilePaths"]
             st.session_state["imagePaths"]
+    with qna_tab:
+        response_container = st.container(height=800)
+        input_container = st.container()
+        
+        with response_container:
+            paint_history()
+        with input_container:
+            question = st.chat_input("여기에 물어보고 싶은 내용을 입력해주세요!")
+        with response_container:
+            if question:
+                send_message(question, "human")
+                send_message("aa", "ai")
