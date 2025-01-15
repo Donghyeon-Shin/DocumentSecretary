@@ -83,9 +83,9 @@ def document_split(file_path, includeCode=True):
 class Prompts:
     def get_main_refine_prompt(self):
         main_refine_prompt = ChatPromptTemplate.from_template(
-            """
-        Your job is to find the right answer to the {question}.
-        You are very good at using Korean and English.
+        """
+        Your job is to produce a final summary.
+        You are very good at using Korean and English. but You must answer the question in Korean.
         We have provied an existing answer to a certain point : {existing_content}
         We have the opportunity to refine the existing answer (only if needed) with some more context below.
         ------
@@ -119,7 +119,7 @@ class Prompts:
 class Chains:
     prompts = Prompts()
 
-    def run_Refine_chain(self, mainFilePath, question):
+    def run_Refine_chain(self, mainFilePath):
         if os.path.isfile(mainFilePath):
             mainDocs = document_split(mainFilePath)
         else:
@@ -132,7 +132,7 @@ class Chains:
         answer = ""
 
         for doc in mainDocs:
-            answer = main_refine_chain.invoke({"question" : question, "existing_content" : answer, "context" : doc})
+            answer = main_refine_chain.invoke({"existing_content" : answer, "context" : doc})
         
         return answer
 

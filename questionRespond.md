@@ -1,112 +1,107 @@
 ```cpp
 #include <bits/stdc++.h>
-#define maxLen 100001
+#define MAX_SIZE 200001
 
 using namespace std;
 
-int n, k, ettCnt = 0, s[maxLen], e[maxLen], singers[maxLen], subTreeRoot[maxLen];
-long long j, queryWeight[maxLen], fenwickTree[maxLen];
-pair<int,int> queryRange[maxLen];
-vector<int> tree[maxLen], songsBasedSinger[maxLen], queryMidValue[maxLen];
-vector<pair<long long, int>> query;
+int n, q, head[MAX_SIZE] = {0, }, subTreeSize[MAX_SIZE] = {0 }, parent[MAX_SIZE] = {0, }, s[MAX_SIZE], e[MAX_SIZE], rangeCnt = 0;
+vector<int> adj[MAX_SIZE], boolSegmentTree;
 
-void fenwickTree_Update(int idx, long long val) {
-    while ( idx <= n ) {
-        fenwickTree[idx] += val;
-        idx += (idx & -idx);
+int calcul_SubTreeSize(int node) {
+    subTreeSize[node] = 1;
+    for ( int& nNode : adj[node] ) {
+        if ( nNode == parent[node] ) continue;
+        parent[nNode] = node;
+        subTreeSize[node] += calcul_SubTreeSize(nNode);
+        int& maximumSubTreeNode = adj[node][0];
+        if ( maximumSubTreeNode == parent[node] || subTreeSize[maximumSubTreeNode] < subTreeSize[nNode] ) swap(maximumSubTreeNode, nNode);
     }
+    return subTreeSize[node];
+}
+void hld(int node) {
+    s[node] = ++rangeCnt;
+    for ( auto nNode : adj[node] ) {
+        if ( nNode == parent[node] ) continue;
+        head[nNode] = (nNode == adj[node][0]) ? head[node] : nNode;
+        hld(nNode);
+    }
+    e[node] = rangeCnt;
 }
 
-long long fenwickTree_Sum(int idx) {
-    long long result = 0;
-    while ( idx > 0 ) {
-        result += fenwickTree[idx];
-        idx -= (idx & -idx);
+bool init(int node, int start, int end) {
+    if ( start == end ) return boolSegmentTree[node] = 1;
+    int mid = (start + end) / 2;
+    return boolSegmentTree[node] = (init(node*2, start, mid) && init(node*2 + 1, mid + 1, end));
+}
+
+bool calcul_Connect(int node, int start, int end, int left, int right) {
+    if ( end < left || right < start ) return 1;
+    if ( left <= start && end <= right ) return boolSegmentTree[node];
+    
+    int mid = (start + end) / 2;
+    return (calcul_Connect(node*2, start, mid, left, right) && calcul_Connect(node*2 + 1, mid + 1, end, left, right));
+}
+
+bool IsConnectedTwoNodes(int n1, int n2) {
+    bool result = 1;
+    while ( head[n1] != head[n2] ) {
+        if ( subTreeSize[head[n1]] < subTreeSize[head[n2]] ) swap(n1, n2);
+        result &= calcul_Connect(1, 1, n, s[head[n2]], s[n2]);
+        n2 = parent[head[n2]];
+        
     }
+    if ( s[n1] > s[n2] ) swap(n1, n2);
+    result &= calcul_Connect(1, 1, n, s[n1] + 1, s[n2]);
     return result;
 }
 
-void ett(int node) {
-    s[node] = ++ettCnt;
-    for ( auto nNode : tree[node] ) {
-        if ( s[nNode] == 0 ) ett(nNode);
+void removeEdgeInSegmentTree(int node, int start, int end, int target) {
+    if ( end < target || target < start ) return;
+    if ( start == end ) {
+        boolSegmentTree[node] = 0;
+        return;
     }
-    e[node] = ettCnt;
+    
+    int mid = (start + end) / 2;
+    removeEdgeInSegmentTree(node*2, start, mid, target);
+    removeEdgeInSegmentTree(node*2 + 1, mid + 1, end, target);
+    boolSegmentTree[node] = (boolSegmentTree[node*2] && boolSegmentTree[node*2 + 1]);
 }
 
 int main() {
     ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
+    cin.tie(NULL); cout.tie(NULL);
     
-    cin >> n >> k >> j;
+    cin >> n >> q;
+    
+    int height = int(ceil(log2(n)));
+    int tree_Size = ( 1 << (height + 1));
+    boolSegmentTree.resize(tree_Size);
+    
     for ( int i = 2; i <= n; i++ ) {
-        int root;
-        cin >> root;
-        tree[root].push_back(i);
+        int node;
+        cin >> node;
+        adj[node].push_back(i);
+        adj[i].push_back(node);
     }
     
-    ett(1);
-    
-    for ( int i = 1; i <= n; i++ ) {
-        cin >> singers[i];
-        songsBasedSinger[singers[i]].push_back(i);
-    }
-    
-    query.push_back({-1, -1});
-    for ( int i = 1; i <= k; i++ ) {
-        long long dateTime;
-        cin >> dateTime >> subTreeRoot[i] >> queryWeight[i];
-        query.push_back({dateTime, i});
-    }
-    sort(query.begin(), query.end());
-    
-    for ( int i = 1; i <= k; i++ ) {
-        queryRange[i].first = ((int)songsBasedSinger[i].size() == 0 ) ? k+1 : 1;
-        queryRange[i].second = k+1;
-    }
-    
-    while ( 1 ) {
-        bool flag = false;
-        for ( int i = 1; i <= k; i++ ) queryMidValue[i].clear();
-        memset(fenwickTree, 0, sizeof(fenwickTree));
+    head[1] = 1;
+    calcul_SubTreeSize(1);
+    hld(1);
+    init(1, 1, n);
+
+    while ( q-- ) {
+        int v1, v2;
+        bool IsRemoveEdge;
         
-        for ( int i = 1; i <= k; i++ ) {
-            int l = queryRange[i].first, r = queryRange[i].second;
-            if ( l < r ) {
-                flag = true;
-                int mid = (l + r) / 2;
-                queryMidValue[mid].push_back(i);
-            }
+        cin >> v1 >> v2 >> IsRemoveEdge;
+        if ( IsConnectedTwoNodes(v1, v2) ) {
+            cout << "YES\n";
+            if ( IsRemoveEdge ) removeEdgeInSegmentTree(1, 1, n, s[v1]);
+        } else {
+            cout << "NO\n";
+            if ( IsRemoveEdge ) removeEdgeInSegmentTree(1, 1, n, s[v2]);
         }
-        
-        if ( !flag ) break;
-        
-        for ( int i = 1; i <= k; i++ ) {
-            int queryIdx = query[i].second;
-            int root = subTreeRoot[queryIdx];
-            long long weight = queryWeight[queryIdx];
-            
-            long long avgWeight = weight / (e[root] - s[root] + 1);
-            fenwickTree_Update(s[root], avgWeight);
-            fenwickTree_Update(e[root] + 1, -avgWeight);
-            
-            for ( auto singerIdx : queryMidValue[i] ) {
-                long long result = 0;
-                int songsCnt = (int)songsBasedSinger[singerIdx].size();
-                for ( auto song : songsBasedSinger[singerIdx] ) {
-                    result += fenwickTree_Sum(s[song]);
-                    if ( result > j * songsCnt ) break;
-                }
-                if ( result > j * songsCnt ) queryRange[singerIdx].second = i;
-                else queryRange[singerIdx].first = i+1;
-            }
-        }
-    }
-    
-    for ( int i = 1; i <= n; i++ ) {
-        int queryIdx = queryRange[singers[i]].first;
-        if ( queryIdx == k+1 ) cout << -1 << '\n';
-        else cout << query[queryIdx].first << '\n';
     }
     return 0;
 }

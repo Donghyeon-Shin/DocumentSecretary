@@ -5,6 +5,7 @@ from modules.crewModules import Crews
 from modules.utilles import paint_history, send_message, clear_session_message
 from modules.chainModules import Chains
 
+
 def preprocess_path(docPathsList, imgPathsList):
     docPaths = []
     imgPaths = []
@@ -19,7 +20,7 @@ def preprocess_path(docPathsList, imgPathsList):
     return {"docPaths": docPaths, "imgPaths": imgPaths}
 
 
-@st.dialog("파일 목록", width = "large")
+@st.dialog("파일 목록", width="large")
 def view_all_file_path():
     left, right = st.columns(2, vertical_alignment="top")
 
@@ -31,13 +32,28 @@ def view_all_file_path():
                 st.write(file_name)
     with right:
         st.markdown("### 불러온 이미지 목록")
-        with st.container(border=True):    
+        with st.container(border=True):
             for imgPath in st.session_state["searchAllFilePaths"]["imgPaths"]:
                 img_name = imgPath.split("/")[-1]
-                st.write(img_name)        
+                st.write(img_name)
 
 
-@st.cache_data(show_spinner="지정된 경로에 있는 모든 파일을 불러오고 있습니다...")
+@st.dialog("문서 요약", width="large")
+def view_file_summary(file_path):
+    with st.spinner("문서를 요약하는 중입니다..."):
+        summary_content = get_file_summary(file_path)
+    st.markdown("### 요약 내용")
+    st.markdown(summary_content)
+
+
+@st.cache_data(show_spinner=False)
+def get_file_summary(file_path):
+    chains = Chains()
+    result = chains.run_Refine_chain(file_path)
+    return result
+
+
+@st.cache_data(show_spinner=False)
 def run_docPathCrew(file, extension_name):
     docPathCrewResult = crews.run_docPathSearch(
         extension_name=extension_name, file_path="./file"
@@ -45,15 +61,13 @@ def run_docPathCrew(file, extension_name):
     return docPathCrewResult
 
 
-@st.cache_data(
-    show_spinner="지정된 경로에 있는 모든 이미지 파일을 불러오고 있습니다..."
-)
+@st.cache_data(show_spinner=False)
 def run_imgPathCrew(file):
     imgPathCrewResult = crews.run_imgPathSearch(img_path="./file")
     return imgPathCrewResult
 
 
-@st.cache_data(show_spinner="불러온 파일 중 키워드에 맞는 파일들을 찾고 있습니다...")
+@st.cache_data(show_spinner=False)
 def run_fileSelectCrew(file, extension_name, keyward, docPaths, imgPaths):
     fileSelectCrewResult = crews.run_fileSelect(keyward, docPaths, imgPaths)
     return fileSelectCrewResult
@@ -133,7 +147,7 @@ with st.sidebar:
 
 if st.session_state["isSuccessFile"]:
     crews = Crews()
-    loadFile_tabs, qna_tab , quiz_tabs = st.tabs(
+    loadFile_tabs, qna_tab, quiz_tabs = st.tabs(
         ["파일 불러오기", "질문하기", "문제 만들기"]
     )
 
@@ -159,10 +173,16 @@ if st.session_state["isSuccessFile"]:
             if doc_search_button:
                 with st.status("파일을 불러오기...", expanded=True) as status:
                     # 파일 경로 Load
-                    docPathCrewResult = run_docPathCrew(file, extension_name)
+                    with st.spinner(
+                        "지정된 경로에 있는 모든 파일을 불러오고 있습니다..."
+                    ):
+                        docPathCrewResult = run_docPathCrew(file, extension_name)
                     st.write("모든 파일을 불러왔습니다.")
 
-                    imgPathCrewResult = run_imgPathCrew(file)
+                    with st.spinner(
+                        "지정된 경로에 있는 모든 이미지 파일을 불러오고 있습니다..."
+                    ):
+                        imgPathCrewResult = run_imgPathCrew(file)
                     st.write("모든 이미지를 불러왔습니다.")
                     if docPathCrewResult == "Error" or imgPathCrewResult == "Error":
                         status.update(
@@ -176,14 +196,16 @@ if st.session_state["isSuccessFile"]:
                             docPathCrewResult["filePaths"],
                             imgPathCrewResult["filePaths"],
                         )
-
-                        fileSelectCrewResult = run_fileSelectCrew(
-                            file,
-                            extension_name,
-                            keyward,
-                            st.session_state["searchAllFilePaths"]["docPaths"],
-                            st.session_state["searchAllFilePaths"]["imgPaths"],
-                        )
+                        with st.spinner(
+                            "불러온 파일 중 키워드에 맞는 파일들을 찾고 있습니다..."
+                        ):
+                            fileSelectCrewResult = run_fileSelectCrew(
+                                file,
+                                extension_name,
+                                keyward,
+                                st.session_state["searchAllFilePaths"]["docPaths"],
+                                st.session_state["searchAllFilePaths"]["imgPaths"],
+                            )
                         st.write("키워드에 맞는 파일들을 모두 찾았습니다.")
                         if fileSelectCrewResult == "Error":
                             status.update(
@@ -202,9 +224,13 @@ if st.session_state["isSuccessFile"]:
                             ]
                             st.session_state["imagePaths"] = [
                                 False
-                                for i in range(len(fileSelectCrewResult["imagePaths"]))
+                                for i in range(
+                                    len(fileSelectCrewResult["imagePaths"])
+                                )
                             ]
-                            status.update(label="파일을 불러왔습니다.", expanded=False)
+                            status.update(
+                                label="파일을 불러왔습니다.", expanded=False
+                            )
                             st.session_state["associatedFilePaths"] = (
                                 fileSelectCrewResult
                             )
@@ -265,11 +291,14 @@ if st.session_state["isSuccessFile"]:
             st.session_state["relatedFilePaths"]
             st.session_state["imagePaths"]
     with qna_tab:
-        document_summary_button = st.button("문서 전체 요약") # 구현하기!!
+        document_summary_button = st.button("문서 전체 요약")  # 구현하기!!
+        if document_summary_button:
+            view_file_summary(st.session_state["mainFilePath"])
+
         response_container = st.container(height=800)
         input_container = st.container()
         chains = Chains()
-        
+
         with response_container:
             paint_history()
         with input_container:
@@ -280,6 +309,7 @@ if st.session_state["isSuccessFile"]:
                 with st.spinner("질문에 대한 답을 만들고 있습니다...."):
                     # result = chains.run_RAG_chain(st.session_state["mainFilePath"], question)
                     # result = chains.run_Refine_chain(st.session_state["mainFilePath"], question)
-                    result = crews.run_questionRespondent(question, st.session_state["mainFilePath"])
-                    print(result)
+                    result = crews.run_questionRespondent(
+                        question, st.session_state["mainFilePath"]
+                    )
                     send_message(result, "ai")
