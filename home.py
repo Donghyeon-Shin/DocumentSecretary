@@ -303,9 +303,6 @@ if st.session_state["isSuccessFile"]:
         input_container = st.container()
         chains = Chains()
 
-        if isInclude_images_toggle:
-            st.write("관련 이미지를 포함합니다!")
-
         with response_container:
             paint_history()
         with input_container:
@@ -323,7 +320,12 @@ if st.session_state["isSuccessFile"]:
                         for relatedFilePath in st.session_state["relatedFilePaths"]:
                             if relatedFilePath != False:
                                 relatedFilePaths.append(relatedFilePath)
-                        print(relatedFilePaths)
-                        result = crews.run_refine_crew(result, relatedFilePaths)
+                        result = crews.run_document_refine_crew(result, relatedFilePaths)
 
+                    if isInclude_images_toggle:
+                        imagePaths = []
+                        for imagePath in st.session_state["imagePaths"]:
+                            if imagePath != False:
+                                imagePaths.append(imagePath)
+                        result = crews.run_image_refine_crew(result, imagePaths)
                     send_message(result, "ai")

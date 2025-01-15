@@ -1,112 +1,17 @@
-HLD의 응용문제 코드 예시는 다음과 같습니다. 이 코드는 트리 구조에서 두 노드 사이의 연결 여부를 판단하는 문제를 해결하기 위해 작성되었습니다. 
+HLD(Heavy Light Decomposition)을 배우기 위해서는 다음과 같은 지식이 필요합니다:
 
-```cpp
-#include <bits/stdc++.h>
-#define MAX_SIZE 200001
+1. **트리 구조 이해**: HLD는 트리 구조에서 작동하는 알고리즘이므로, 트리의 기본 개념과 구조를 이해해야 합니다. 특히, 부모 노드와 자식 노드의 관계, 서브트리의 개념을 알아야 합니다.
 
-using namespace std;
+2. **DFS(Depth-First Search)**: HLD의 구현 과정에서 DFS를 사용하여 각 노드의 서브트리 크기를 계산하고, Heavy Edge와 Light Edge를 구분하는 데 필요합니다. DFS의 작동 방식과 재귀적 호출에 대한 이해가 필수적입니다.
 
-int n, q, head[MAX_SIZE] = {0, }, subTreeSize[MAX_SIZE] = {0 }, parent[MAX_SIZE] = {0, }, s[MAX_SIZE], e[MAX_SIZE], rangeCnt = 0;
-vector<int> adj[MAX_SIZE], boolSegmentTree;
+3. **서브트리 크기 계산**: 각 노드의 서브트리 크기를 계산하는 방법을 알아야 합니다. 이는 HLD에서 Heavy Edge를 정의하는 데 중요한 역할을 합니다.
 
-int calcul_SubTreeSize(int node) {
-    subTreeSize[node] = 1;
-    for ( int& nNode : adj[node] ) {
-        if ( nNode == parent[node] ) continue;
-        parent[nNode] = node;
-        subTreeSize[node] += calcul_SubTreeSize(nNode);
-        int& maximumSubTreeNode = adj[node][0];
-        if ( maximumSubTreeNode == parent[node] || subTreeSize[maximumSubTreeNode] < subTreeSize[nNode] ) swap(maximumSubTreeNode, nNode);
-    }
-    return subTreeSize[node];
-}
+4. **Euler Tour Technique(ETT)**: HLD에서는 ETT를 사용하여 각 노드 또는 엣지의 구간을 정의합니다. ETT의 개념과 구현 방법을 이해해야 합니다.
 
-void hld(int node) {
-    s[node] = ++rangeCnt;
-    for ( auto nNode : adj[node] ) {
-        if ( nNode == parent[node] ) continue;
-        head[nNode] = (nNode == adj[node][0]) ? head[node] : nNode;
-        hld(nNode);
-    }
-    e[node] = rangeCnt;
-}
+5. **Segment Tree**: HLD의 구간 계산을 위해 Segment Tree를 사용합니다. Segment Tree의 구조와 업데이트 및 쿼리 방법을 이해해야 합니다.
 
-bool init(int node, int start, int end) {
-    if ( start == end ) return boolSegmentTree[node] = 1;
-    int mid = (start + end) / 2;
-    return boolSegmentTree[node] = (init(node*2, start, mid) && init(node*2 + 1, mid + 1, end));
-}
+6. **LCA(Lowest Common Ancestor)**: HLD의 구현에서 LCA를 사용할 수 있지만, 코드가 복잡해질 수 있으므로 개인적으로 선호하지 않는다고 언급되어 있습니다. LCA의 개념과 활용 방법도 알고 있으면 좋습니다.
 
-bool calcul_Connect(int node, int start, int end, int left, int right) {
-    if ( end < left || right < start ) return 1;
-    if ( left <= start && end <= right ) return boolSegmentTree[node];
-    
-    int mid = (start + end) / 2;
-    return (calcul_Connect(node*2, start, mid, left, right) && calcul_Connect(node*2 + 1, mid + 1, end, left, right));
-}
+7. **시간 복잡도**: HLD의 시간 복잡도에 대한 이해가 필요합니다. DFS는 O(N)의 시간 복잡도를 가지며, Segment Tree의 쿼리 및 업데이트는 O(logN)입니다.
 
-bool IsConnectedTwoNodes(int n1, int n2) {
-    bool result = 1;
-    while ( head[n1] != head[n2] ) {
-        if ( subTreeSize[head[n1]] < subTreeSize[head[n2]] ) swap(n1, n2);
-        result &= calcul_Connect(1, 1, n, s[head[n2]], s[n2]);
-        n2 = parent[head[n2]];
-    }
-    if ( s[n1] > s[n2] ) swap(n1, n2);
-    result &= calcul_Connect(1, 1, n, s[n1] + 1, s[n2]);
-    return result;
-}
-
-void removeEdgeInSegmentTree(int node, int start, int end, int target) {
-    if ( end < target || target < start ) return;
-    if ( start == end ) {
-        boolSegmentTree[node] = 0;
-        return;
-    }
-    
-    int mid = (start + end) / 2;
-    removeEdgeInSegmentTree(node*2, start, mid, target);
-    removeEdgeInSegmentTree(node*2 + 1, mid + 1, end, target);
-    boolSegmentTree[node] = (boolSegmentTree[node*2] && boolSegmentTree[node*2 + 1]);
-}
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL); cout.tie(NULL);
-    
-    cin >> n >> q;
-    
-    int height = int(ceil(log2(n)));
-    int tree_Size = ( 1 << (height + 1));
-    boolSegmentTree.resize(tree_Size);
-    
-    for ( int i = 2; i <= n; i++ ) {
-        int node;
-        cin >> node;
-        adj[node].push_back(i);
-        adj[i].push_back(node);
-    }
-    
-    head[1] = 1;
-    calcul_SubTreeSize(1);
-    hld(1);
-    init(1, 1, n);
-
-    while ( q-- ) {
-        int v1, v2;
-        bool IsRemoveEdge;
-        
-        cin >> v1 >> v2 >> IsRemoveEdge;
-        if ( IsConnectedTwoNodes(v1, v2) ) {
-            cout << "YES\n";
-            if ( IsRemoveEdge ) removeEdgeInSegmentTree(1, 1, n, s[v1]);
-        } else {
-            cout << "NO\n";
-            if ( IsRemoveEdge ) removeEdgeInSegmentTree(1, 1, n, s[v2]);
-        }
-    }
-    return 0;
-}
-```
-
-이 코드는 HLD(Heavy-Light Decomposition) 알고리즘을 사용하여 트리의 두 노드 간의 연결 여부를 판단하는 문제를 해결합니다. 각 노드의 서브트리 크기를 계산하고, HLD를 통해 간선을 그룹화하여 세그먼트 트리를 사용하여 연결 상태를 관리합니다.
+이러한 지식들을 바탕으로 HLD를 배우고 구현할 수 있습니다. HLD는 복잡한 트리 쿼리를 효율적으로 처리하기 위한 강력한 도구이므로, 위의 내용을 충분히 이해하고 연습하는 것이 중요합니다.

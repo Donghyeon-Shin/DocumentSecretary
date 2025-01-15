@@ -292,7 +292,7 @@ class Tasks:
         return Task(
             description="""
             Read all the img files and Add supplementary content to understand the contents of the existing answer.
-            NEVER modify the file path in fileSelect.
+            NEVER modify the file path.
             You are very good at using Korean and English.
             We have provied an existing answer to a certain point : {existing_content}
             We have the opportunity to refine the existing answer (only if needed) with some more context below.
@@ -303,6 +303,7 @@ class Tasks:
             expected_output="""
             Given the new context, refine the original answer.
             If the context ins't useful, RETURN the original answer.
+            You must answer in Korean.
             """,
             agent=agent,
             output_file="ImgExtractContent.md",
@@ -506,7 +507,7 @@ class Crews:
         ).raw
         return result
 
-    def run_refine_crew(self, content, relatedFilePaths):
+    def run_document_refine_crew(self, content, relatedFilePaths):
 
         refineRespondent = self.agents.refineRespondent()
         refineRespondent_task = self.tasks.refineRespond(refineRespondent)
@@ -528,5 +529,26 @@ class Crews:
             content = questionRespondentCrew.kickoff(
                 dict(existing_content=content, file_content=filePathContent)
             ).raw
+
+        return content
+
+    def run_image_refine_crew(self, content, imgFilePaths):
+
+        imgExtracter = self.agents.imgExtracter()
+        imgExtracter_task = self.tasks.imgExtract(imgExtracter)
+
+        imgExtracterCrew = Crew(
+            agents=[
+                imgExtracter,
+            ],
+            tasks=[
+                imgExtracter_task,
+            ],
+            verbose=True,
+        )
+
+        content = imgExtracterCrew.kickoff(
+            dict(existing_content=content, img_path=imgFilePaths)
+        ).raw
 
         return content
