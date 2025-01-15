@@ -55,7 +55,7 @@ def document_split(file_path, includeCode=True):
         chunk_overlap=60,
     )
     docsList = loader.load()
-    docs = docsList[0].page_content.split("\n\n") 
+    docs = docsList[0].page_content.split("\n\n")
     content = ""
     codeDocs = []
     codeDoc = ""
@@ -83,7 +83,7 @@ def document_split(file_path, includeCode=True):
 class Prompts:
     def get_main_refine_prompt(self):
         main_refine_prompt = ChatPromptTemplate.from_template(
-        """
+            """
         Your job is to produce a final summary.
         You are very good at using Korean and English. but You must answer the question in Korean.
         We have provied an existing answer to a certain point : {existing_content}
@@ -132,8 +132,10 @@ class Chains:
         answer = ""
 
         for doc in mainDocs:
-            answer = main_refine_chain.invoke({"existing_content" : answer, "context" : doc})
-        
+            answer = main_refine_chain.invoke(
+                {"existing_content": answer, "context": doc}
+            )
+
         return answer
 
     def run_RAG_chain(self, mainFilePath, question):

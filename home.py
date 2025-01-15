@@ -11,11 +11,11 @@ def preprocess_path(docPathsList, imgPathsList):
     imgPaths = []
 
     for docPath in docPathsList:
-        if os.path.splitext(docPath)[1] == extension_name:
+        if os.path.isfile(docPath) and os.path.splitext(docPath)[1] == extension_name:
             docPaths.append(docPath)
 
     for imgPath in imgPathsList:
-        if os.path.splitext(imgPath)[1] != ".svg":
+        if os.path.isfile(imgPath) and os.path.splitext(imgPath)[1] != ".svg":
             imgPaths.append(imgPath)
     return {"docPaths": docPaths, "imgPaths": imgPaths}
 
@@ -224,13 +224,9 @@ if st.session_state["isSuccessFile"]:
                             ]
                             st.session_state["imagePaths"] = [
                                 False
-                                for i in range(
-                                    len(fileSelectCrewResult["imagePaths"])
-                                )
+                                for i in range(len(fileSelectCrewResult["imagePaths"]))
                             ]
-                            status.update(
-                                label="파일을 불러왔습니다.", expanded=False
-                            )
+                            status.update(label="파일을 불러왔습니다.", expanded=False)
                             st.session_state["associatedFilePaths"] = (
                                 fileSelectCrewResult
                             )
@@ -261,14 +257,11 @@ if st.session_state["isSuccessFile"]:
                     relatedFilePathsToggles = []
                     for relatedFilePath in relatedFilePaths:
                         file_name = relatedFilePath.split("/")[-1]
-                        if file_name != mainFile_name:
-                            relatedFilePathsToggles.append(st.toggle(file_name))
+                        relatedFilePathsToggles.append(st.toggle(file_name))
 
                     for i, relatedFilePathsToggle in enumerate(relatedFilePathsToggles):
                         if relatedFilePathsToggle:
-                            st.session_state["relatedFilePaths"][i] = relatedFilePaths[
-                                i
-                            ]
+                            st.session_state["relatedFilePaths"][i] = relatedFilePaths[i]
                         else:
                             st.session_state["relatedFilePaths"][i] = False
                 # 이미지 경로 설정
@@ -291,13 +284,27 @@ if st.session_state["isSuccessFile"]:
             st.session_state["relatedFilePaths"]
             st.session_state["imagePaths"]
     with qna_tab:
-        document_summary_button = st.button("문서 전체 요약")  # 구현하기!!
-        if document_summary_button:
-            view_file_summary(st.session_state["mainFilePath"])
+        left, mid, right = st.columns(3, vertical_alignment="top")
+        isInclude_relatedFiles_toggle = ""
+        isInclude_images_toggle = ""
+
+        with left:
+            document_summary_button = st.button("문서 전체 요약")
+            if document_summary_button:
+                view_file_summary(st.session_state["mainFilePath"])
+
+        with mid:
+            isInclude_relatedFiles_toggle = st.toggle("관련 문서 포함")
+
+        with right:
+            isInclude_images_toggle = st.toggle("관련 이미지 포함")
 
         response_container = st.container(height=800)
         input_container = st.container()
         chains = Chains()
+
+        if isInclude_images_toggle:
+            st.write("관련 이미지를 포함합니다!")
 
         with response_container:
             paint_history()
@@ -307,9 +314,16 @@ if st.session_state["isSuccessFile"]:
             if question:
                 send_message(question, "human")
                 with st.spinner("질문에 대한 답을 만들고 있습니다...."):
-                    # result = chains.run_RAG_chain(st.session_state["mainFilePath"], question)
-                    # result = chains.run_Refine_chain(st.session_state["mainFilePath"], question)
                     result = crews.run_questionRespondent(
                         question, st.session_state["mainFilePath"]
                     )
+
+                    if isInclude_relatedFiles_toggle:
+                        relatedFilePaths = []
+                        for relatedFilePath in st.session_state["relatedFilePaths"]:
+                            if relatedFilePath != False:
+                                relatedFilePaths.append(relatedFilePath)
+
+                        result = crews.run_refine_crew(result, relatedFilePaths)
+
                     send_message(result, "ai")
