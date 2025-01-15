@@ -265,6 +265,7 @@ if st.session_state["isSuccessFile"]:
             st.session_state["relatedFilePaths"]
             st.session_state["imagePaths"]
     with qna_tab:
+        document_summary_button = st.button("문서 전체 요약") # 구현하기!!
         response_container = st.container(height=800)
         input_container = st.container()
         chains = Chains()
@@ -277,6 +278,8 @@ if st.session_state["isSuccessFile"]:
             if question:
                 send_message(question, "human")
                 with st.spinner("질문에 대한 답을 만들고 있습니다...."):
-                    result = chains.run_RAG_chain(st.session_state["mainFilePath"], question)
+                    # result = chains.run_RAG_chain(st.session_state["mainFilePath"], question)
+                    # result = chains.run_Refine_chain(st.session_state["mainFilePath"], question)
+                    result = crews.run_questionRespondent(question, st.session_state["mainFilePath"])
                     print(result)
                     send_message(result, "ai")

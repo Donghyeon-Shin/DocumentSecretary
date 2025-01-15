@@ -96,6 +96,16 @@ class Agents:
             verbose=True,
         )
 
+    def questionRespondent(self):
+        return Agent(
+            role="questionRespondent",
+            goal="Answer the question in a state based on specific content.",
+            backstory="You are a great teacher. You're ready to answer any questions. You are also very good at using Korean and English.",
+            llm=gpt_4o_mini,
+            allow_delegation=False,
+            verbose=True,
+        )
+
     def imgExtracter(self):
         return Agent(
             role="imgExtracter",
@@ -225,6 +235,28 @@ class Tasks:
             output_file="associateFilePath.md",
         )
 
+    def questionRespond(self, agent):
+        return Task(
+            description="""
+            Read content and Find the correct answer to the question.
+            
+            It's the question you'll answer.
+            question : {question}
+
+            And below is the contents of the document you should refer to.
+            ------
+            {content}
+            ------
+            """,
+            expected_output="""
+            You should answer the question in as much detail as you can.
+            If user ask questions in Korean, answer them in Korean, and if user ask questions in English, answer them in English
+            If the question doesn't include that content, Just Say 'I Don't know'.
+            """,
+            agent=agent,
+            output_file="questionRespond.md",
+        )
+
     def imgExtract(self, agent):
         return Task(
             description="""
@@ -304,7 +336,8 @@ class Crews:
         except Exception as e:
             print(e)
             return "Error"
-    def run_fileSelect(self, keyward, docPaths: List, imgPaths : List):
+
+    def run_fileSelect(self, keyward, docPaths: List, imgPaths: List):
 
         docPathsStr = ""
         for docPath in docPaths:
@@ -378,13 +411,13 @@ class Crews:
             relatedFilePaths = fileSelectResultJson["relatedFiles"]
             imagePathsList = fileSelectResultJson["imageFiles"]
 
-            #Image File 확장자 확인하기(중복으로 사용되어 함수로 만들어 활용해도 될 것 같음.)
+            # Image File 확장자 확인하기(중복으로 사용되어 함수로 만들어 활용해도 될 것 같음.)
             imagePaths = []
 
             for imgPath in imagePathsList:
                 if os.path.splitext(imgPath)[1] != ".svg":
                     imagePaths.append(imgPath)
-            
+
             result = {
                 "mainFilePath": mainFilePath,
                 "relatedFilePaths": relatedFilePaths,
@@ -394,3 +427,27 @@ class Crews:
         except Exception as e:
             print(e)
             return "Error"
+
+    def run_questionRespondent(self, question, mainFilePath):
+        mainDoc = ""
+        if os.path.isfile(mainFilePath):
+            with open(mainFilePath, "r") as f:
+                mainDoc = f.read()
+        else:
+            return "Error"
+
+        questionRespondent = self.agents.questionRespondent()
+        questionRespondent_task = self.tasks.questionRespond(questionRespondent)
+
+        questionRespondentCrew = Crew(
+            agents=[
+                questionRespondent,
+            ],
+            tasks=[
+                questionRespondent_task,
+            ],
+            verbose=True,
+        )
+
+        result = questionRespondentCrew.kickoff(dict(question = question, content = mainDoc)).raw
+        return result

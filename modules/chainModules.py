@@ -54,8 +54,30 @@ def document_split(file_path, includeCode=True):
         chunk_size=500,
         chunk_overlap=60,
     )
-    docs = loader.load_and_split(text_splitter=splitter)
-    return docs
+    docsList = loader.load()
+    docs = docsList[0].page_content.split("\n\n") 
+    content = ""
+    codeDocs = []
+    codeDoc = ""
+    flag = False
+    for doc in docs:
+        if "```" in doc:
+            if flag:
+                codeDocs.append(codeDoc)
+                doc.replace("```", " ")
+                flag = False
+            else:
+                codeDoc = ""
+                flag = True
+
+        if flag:
+            codeDoc += doc + " "
+        else:
+            content += doc + " "
+    textDocs = splitter.split_text(content)
+    if includeCode:
+        textDocs.extend(codeDocs)
+    return textDocs
 
 
 class Prompts:
@@ -70,7 +92,8 @@ class Prompts:
         {context}
         ------
         Given the new context, refine the original answer.
-        If the context ins't useful, RETURN the original answer.    
+        If the context ins't useful, RETURN the original answer.
+        DON'T make it up. 
         """
         )
         return main_refine_prompt
@@ -96,21 +119,38 @@ class Prompts:
 class Chains:
     prompts = Prompts()
 
+    def run_Refine_chain(self, mainFilePath, question):
+        if os.path.isfile(mainFilePath):
+            mainDocs = document_split(mainFilePath)
+        else:
+            return "Error"
+
+        main_refine_prompt = self.prompts.get_main_refine_prompt()
+
+        main_refine_chain = main_refine_prompt | llm | StrOutputParser()
+
+        answer = ""
+
+        for doc in mainDocs:
+            answer = main_refine_chain.invoke({"question" : question, "existing_content" : answer, "context" : doc})
+        
+        return answer
+
     def run_RAG_chain(self, mainFilePath, question):
         if os.path.isfile(mainFilePath):
             retriever = embed_file(mainFilePath)
         else:
             return "Error"
 
-        main_refine_prompt = self.prompts.get_RAG_prompt()
-        main_refine_chain = (
+        main_RAG_prompt = self.prompts.get_RAG_prompt()
+        main_RAG_chain = (
             {
                 "context": retriever | RunnableLambda(format_doc),
                 "question": RunnablePassthrough(),
             }
-            | main_refine_prompt
+            | main_RAG_prompt
             | llm
             | StrOutputParser()
         )
-        answer = main_refine_chain.invoke(question)
+        answer = main_RAG_chain.invoke(question)
         return answer
