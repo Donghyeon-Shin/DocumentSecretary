@@ -1,46 +1,9 @@
-DFS(Depth First Search)는 노드 탐색 방법 중 하나로, 임의의 노드에서 다음 Branch로 넘어가기 전에 해당 Branch를 완벽하게 탐색하는 방법을 말합니다. DFS는 하나의 Branch씩 탐색하기 때문에 보통 재귀를 이용해 구현됩니다. BFS와 마찬가지로 Visited Array를 사용하여 중복 탐색을 방지합니다. 노드의 개수 n, 간선의 개수 e일 때 시간 복잡도는 O(n+e)입니다.
+기존의 답변은 HLD(Heavy-Light Decomposition) 알고리즘을 사용하여 트리의 두 노드 간의 연결 여부를 판단하고, 간선을 제거하는 기능을 구현하는 코드에 대한 설명이었습니다. 또한, DFS(Depth-First Search) 알고리즘을 사용하여 그래프의 탐색을 구현한 예시 코드와 응용 문제 코드가 함께 제공되었습니다. 이를 통해 DFS 알고리즘의 개념과 응용에 대한 이해를 높일 수 있습니다.
 
-DFS의 원리는 다음과 같습니다. 예를 들어 Node 1에서 탐색을 시작한다고 가정했을 때, Node 1을 기준으로 왼쪽 Branch부터 탐색하여 Node 2, Node 4, Node 5가 순서대로 호출됩니다. 그 다음 재귀를 통해 Node 4로 돌아가 오른쪽 Branch에 있는 Node 6을 탐색합니다. Node 6은 다음 Branch가 없기 때문에 다른 Branch가 있는 Node 1번까지 올라가 Node 3을 탐색합니다. 이러한 방식은 더 이상 탐색할 수 없을 때까지 반복됩니다.
+추가적으로, Euler Tour Technique에 대한 설명과 코드, 그리고 응용 문제에 대한 설명과 코드가 제공되었습니다. Euler Tour Technique은 DFS를 사용하여 트리의 서브 트리 구간을 List 형태로 만들어 구간에 대한 정보를 처리하는 알고리즘입니다. 또한, 응용 문제를 통해 Lazy Segment Tree와 Segment Tree를 사용하여 구간에 대한 정보를 처리하는 방법에 대한 이해를 높일 수 있습니다.
 
-DFS는 반복문과 재귀를 이용하여 구현되며, 중복 탐색을 방지하는 것이 매우 중요합니다. 아래는 DFS의 C++ 코드 예시입니다:
+Segment Tree에 대한 보다 자세한 설명과 코드 예시가 추가되었습니다. Segment Tree의 개념, 원리, 그림으로 이해하기, 코드 예시, 그리고 응용 문제에 대한 설명과 코드가 제공되어 Segment Tree에 대한 이해를 높일 수 있습니다. Segment Tree를 사용하여 배열 범위의 합, 차, 곱을 빠르게 계산하는 방법에 대한 이해를 높일 수 있습니다. Segment Tree를 활용한 코드 예시와 응용 문제를 통해 Segment Tree의 활용 방법에 대한 이해를 높일 수 있습니다.
 
-```cpp
-#include <bits/stdc++.h>
+또한, 기존 답변에는 LCA(Lowest Common Ancestor) 알고리즘에 대한 설명과 코드 예시가 누락되어 있습니다. LCA 알고리즘은 Tree에서 두 노드 간의 최소 공통 조상을 찾는 알고리즘으로, DFS(Depth-First Search)를 이용해 노드의 level(깊이) 및 parent Array를 채우는 과정과 두 노드의 조상을 찾는 과정으로 나눌 수 있습니다. LCA 알고리즘의 원리와 코드 예시를 통해 LCA를 구하는 방법에 대한 이해를 높일 수 있습니다. 또한, LCA 알고리즘을 활용한 응용 문제를 통해 실제 상황에서의 적용 방법에 대한 이해를 높일 수 있습니다.
 
-using namespace std;
-
-int n; // node cnt
-int e; // edge cnt
-int start; // start node
-vector<int> graph[10001];
-bool visited[10001] = {0, };
-
-void dfs(int node) {
-    cout << node << ' ';
-    visited[node] = true;
-    for ( int i = 0; i < (int)graph[node].size(); i++ ) {
-        int nNode = graph[node][i];
-        if ( !visited[nNode] ) dfs(nNode);
-    }
-}
-
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL); cout.tie(NULL);
-    
-    cin >> n >> e;
-    for ( int i = 0; i < e; i++ ) {
-        int a, b;
-        cin >> a >> b;
-        graph[a].push_back(b);
-        graph[b].push_back(a);
-    }
-    cin >> start;
-    dfs(start);
-    return 0;
-}
-```
-
-DFS는 다양한 문제에 응용될 수 있습니다. 예를 들어, 유기농 배추 문제(1012)에서는 DFS를 사용하여 그래프 이론을 적용하고, 방문한 좌표에 Graph 값을 1에서 0으로 바꿈으로써 중복 탐색을 방지했습니다. 내리막 길 문제(1520)에서는 DFS와 DP를 결합하여 문제를 해결했습니다. 
-
-이처럼 DFS는 그래프 탐색에 매우 유용한 알고리즘입니다.
+따라서, LCA 알고리즘에 대한 설명과 코드 예시를 추가하여 기존의 답변을 보완하고, 사용자들이 Tree 알고리즘에 대한 종합적인 이해를 높일 수 있도록 하겠습니다.

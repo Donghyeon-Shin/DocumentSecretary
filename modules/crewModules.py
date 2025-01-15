@@ -114,9 +114,6 @@ class Agents:
             allow_delegation=False,
             verbose=True,
             llm=gpt_3_5,
-            tools=[
-                VisionTool(),
-            ],
         )
 
     def imgExtracter(self):
@@ -265,7 +262,7 @@ class Tasks:
             """,
             expected_output="""
             You should answer the question in as much detail as you can.
-            If user ask questions in Korean, answer them in Korean, and if user ask questions in English, answer them in English
+            You must answer in Korean.
             If the question doesn't include that content, Just Say 'I Don't know'.
             """,
             agent=agent,
@@ -285,6 +282,7 @@ class Tasks:
             expected_output="""
             Given the new context, refine the original answer.
             If the context ins't useful, RETURN the original answer.
+            You must answer in Korean.
             """,
             agent=agent,
             output_file="questionRefineContent.md",
@@ -333,7 +331,7 @@ class Crews:
         )
 
         try:
-            with open("./docPath.md", "rb") as f:
+            with open("./docPath.md", "r", encoding="UTF-8") as f:
                 filePathContent = f.read()
             filePathResultJson = json.loads(filePathContent)
             filePathsList = filePathResultJson["filePaths"]
@@ -363,7 +361,7 @@ class Crews:
         )
 
         try:
-            with open("./ImgPath.md", "rb") as f:
+            with open("./ImgPath.md", "r", encoding="UTF-8") as f:
                 filePathContent = f.read()
             filePathResultJson = json.loads(filePathContent)
             filePathsList = filePathResultJson["filePaths"]
@@ -421,7 +419,7 @@ class Crews:
         )
 
         try:
-            with open("./mainFilePath.md", "rb") as f:
+            with open("./mainFilePath.md", "r", encoding="UTF-8") as f:
                 mainFileSelectContent = f.read()
             mainFileSelectJson = json.loads(mainFileSelectContent)
             mainFilePath = mainFileSelectJson["mainFile"]
@@ -447,7 +445,7 @@ class Crews:
         )
 
         try:
-            with open("./associateFilePath.md", "rb") as f:
+            with open("./associateFilePath.md", "r", encoding="UTF-8") as f:
                 fileSelectContent = f.read()
             fileSelectResultJson = json.loads(fileSelectContent)
             relatedFilePathsList = fileSelectResultJson["relatedFiles"]
@@ -485,7 +483,7 @@ class Crews:
     def run_questionRespondent(self, question, mainFilePath):
         mainDoc = ""
         if os.path.isfile(mainFilePath):
-            with open(mainFilePath, "r") as f:
+            with open(mainFilePath, "r", encoding="UTF-8") as f:
                 mainDoc = f.read()
         else:
             return "Error"
@@ -525,7 +523,7 @@ class Crews:
 
         for relatedFilePath in relatedFilePaths:
             filePathContent = ""
-            with open(relatedFilePath, "rb") as f:
+            with open(relatedFilePath, "r", encoding="UTF-8") as f:
                 filePathContent = f.read()
             content = questionRespondentCrew.kickoff(
                 dict(existing_content=content, file_content=filePathContent)

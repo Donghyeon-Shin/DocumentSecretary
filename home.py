@@ -323,7 +323,7 @@ if st.session_state["isSuccessFile"]:
                         for relatedFilePath in st.session_state["relatedFilePaths"]:
                             if relatedFilePath != False:
                                 relatedFilePaths.append(relatedFilePath)
-
+                        print(relatedFilePaths)
                         result = crews.run_refine_crew(result, relatedFilePaths)
 
                     send_message(result, "ai")
