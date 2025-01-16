@@ -129,6 +129,16 @@ class Agents:
             ],
         )
 
+    def documentSummarizer(self):
+        return Agent(
+            role="documentSummarizer",
+            goal="Give the document and explain it in detail to make it easier to understand.",
+            backstory="You are fluent in Korean, and You have a tremendous ability to understand and summarize the contents of the document.",
+            allow_delegation=False,
+            verbose=True,
+            llm=gpt_3_5,
+        )
+
 
 class Tasks:
     def docPathSearch(self, agent):
@@ -307,6 +317,25 @@ class Tasks:
             """,
             agent=agent,
             output_file="ImgExtractContent.md",
+        )
+
+    def documentSummerize(self, agent):
+        return Task(
+            description="""
+            Read content and Summerize the contents in detail.
+            
+            Below is the contents of the document you should refer to.
+            ------
+            {content}
+            ------
+            """,
+            expected_output="""
+            You should answer document in as much detail as you can.
+            You must answer in Korean.
+            If the question doesn't include that content, Just Say 'I Don't know'.
+            """,
+            agent=agent,
+            output_file="documentSummary.md",
         )
 
 
@@ -533,23 +562,26 @@ class Crews:
 
         return existing_content
 
-    def run_image_refine_crew(self, content, imgFilePaths):
+    def run_document_summary_crew(self, filePath):
+        doc = ""
+        if os.path.isfile(filePath):
+            with open(filePath, "r", encoding="UTF-8") as f:
+                doc = f.read()
+        else:
+            return "Error"
 
-        imgExtracter = self.agents.imgExtracter()
-        imgExtracter_task = self.tasks.imgExtract(imgExtracter)
+        documentSummarizer = self.agents.documentSummarizer()
+        documentSummarizer_task = self.tasks.documentSummerize(documentSummarizer)
 
         imgExtracterCrew = Crew(
             agents=[
-                imgExtracter,
+                documentSummarizer,
             ],
             tasks=[
-                imgExtracter_task,
+                documentSummarizer_task,
             ],
             verbose=True,
         )
 
-        content = imgExtracterCrew.kickoff(
-            dict(existing_content=content, img_path=imgFilePaths)
-        ).raw
-
+        content = imgExtracterCrew.kickoff(dict(content=doc)).raw
         return content

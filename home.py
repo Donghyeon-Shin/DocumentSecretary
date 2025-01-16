@@ -14,7 +14,8 @@ from modules.utilles import (
     get_first_answer,
     get_document_refine_answer,
     get_image_refine_answer,
-    get_file_summary,
+    get_document_summary,
+    get_file_summary
 )
 
 
@@ -78,7 +79,8 @@ def view_all_file_path():
 @st.dialog("문서 요약", width="large")
 def view_file_summary(file_path):
     with st.spinner("문서를 요약하는 중입니다..."):
-        summary_content = get_file_summary(file_path)
+        #summary_content = get_file_summary(file_path)
+        summary_content = get_document_summary(file_path)
     st.markdown("### 요약 내용")
     st.markdown(summary_content)
 

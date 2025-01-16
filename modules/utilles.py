@@ -45,6 +45,11 @@ def get_image_refine_answer(existing_content, imagePaths):
     result = crews.run_image_refine_crew(existing_content, imagePaths)
     return result
 
+@st.cache_data(show_spinner=False)
+def get_document_summary(filePath):
+    result = crews.run_document_summary_crew(filePath)
+    return result
+
 
 ## Chain run
 @st.cache_data(show_spinner=False)
