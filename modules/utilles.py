@@ -1,7 +1,10 @@
 import os
-from modules.crewModules import Crews
 import streamlit as st
+from modules.crewModules import Crews
+from modules.chainModules import Chains
 
+
+## Crew run
 crews = Crews()
 
 
@@ -41,6 +44,19 @@ def get_document_refine_answer(existing_content, relatedFilePaths):
 def get_image_refine_answer(existing_content, imagePaths):
     result = crews.run_image_refine_crew(existing_content, imagePaths)
     return result
+
+
+## Chain run
+@st.cache_data(show_spinner=False)
+def get_file_summary(file_path):
+    chains = Chains()
+    result = chains.run_Refine_chain(file_path)
+    return result
+
+
+## Data process
+def get_file_name(filePath):
+    return filePath.split("/")[-1]
 
 
 def preprocess_path(docPathsList, imgPathsList, extension_name):

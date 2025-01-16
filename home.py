@@ -7,49 +7,40 @@ from modules.utilles import (
     send_message,
     clear_session_message,
     preprocess_path,
+    get_file_name,
     get_docPath,
     get_imgPath,
     get_fileSelect,
     get_first_answer,
     get_document_refine_answer,
     get_image_refine_answer,
+    get_file_summary,
 )
-from modules.chainModules import Chains
 
 
-@st.dialog("파일 목록", width="large")
-def view_all_file_path():
-    left, right = st.columns(2, vertical_alignment="top")
+## Session Difinition
+if "mainFilePath" not in st.session_state:
+    st.session_state["mainFilePath"] = ""
 
-    with left:
-        st.markdown("### 불러온 문서 목록")
-        with st.container(border=True):
-            for filePath in st.session_state["searchAllFilePaths"]["docPaths"]:
-                file_name = filePath.split("/")[-1]
-                st.write(file_name)
-    with right:
-        st.markdown("### 불러온 이미지 목록")
-        with st.container(border=True):
-            for imgPath in st.session_state["searchAllFilePaths"]["imgPaths"]:
-                img_name = imgPath.split("/")[-1]
-                st.write(img_name)
+if "chosenRelatedFilePaths" not in st.session_state:
+    st.session_state["chosenRelatedFilePaths"] = []
 
+if "chosenImagePaths" not in st.session_state:
+    st.session_state["chosenImagePaths"] = []
 
-@st.dialog("문서 요약", width="large")
-def view_file_summary(file_path):
-    with st.spinner("문서를 요약하는 중입니다..."):
-        summary_content = get_file_summary(file_path)
-    st.markdown("### 요약 내용")
-    st.markdown(summary_content)
+if "isSuccessFile" not in st.session_state:
+    st.session_state["isSuccessFile"] = False
 
+if "isLoadFile" not in st.session_state:
+    st.session_state["isLoadFile"] = False
 
-@st.cache_data(show_spinner=False)
-def get_file_summary(file_path):
-    chains = Chains()
-    result = chains.run_Refine_chain(file_path)
-    return result
+if "searchAllFilePaths" not in st.session_state:
+    st.session_state["searchAllFilePaths"] = {}
 
+if "associatedFilePaths" not in st.session_state:
+    st.session_state["associatedFilePaths"] = {}
 
+## Page title, Header setting
 st.set_page_config(
     page_title="Document J.A.R.V.I.S.",
     page_icon="🖥️",
@@ -65,28 +56,34 @@ st.markdown(
     """
 )
 
-if "mainFilePath" not in st.session_state:
-    st.session_state["mainFilePath"] = False
+## Dialog
+@st.dialog("파일 목록", width="large")
+def view_all_file_path():
+    left, right = st.columns(2, vertical_alignment="top")
 
-if "relatedFilePaths" not in st.session_state:
-    st.session_state["relatedFilePaths"] = []
-
-if "imagePaths" not in st.session_state:
-    st.session_state["imagePaths"] = []
-
-if "isSuccessFile" not in st.session_state:
-    st.session_state["isSuccessFile"] = False
-
-if "isLoadFile" not in st.session_state:
-    st.session_state["isLoadFile"] = False
-
-if "searchAllFilePaths" not in st.session_state:
-    st.session_state["searchAllFilePaths"] = {}
-
-if "associatedFilePaths" not in st.session_state:
-    st.session_state["associatedFilePaths"] = {}
+    with left:
+        st.markdown("### 불러온 문서 목록")
+        with st.container(border=True):
+            for filePath in st.session_state["searchAllFilePaths"]["docPaths"]:
+                file_name = get_file_name(filePath)
+                st.write(file_name)
+    with right:
+        st.markdown("### 불러온 이미지 목록")
+        with st.container(border=True):
+            for imgPath in st.session_state["searchAllFilePaths"]["imgPaths"]:
+                img_name = get_file_name(imgPath)
+                st.write(img_name)
 
 
+@st.dialog("문서 요약", width="large")
+def view_file_summary(file_path):
+    with st.spinner("문서를 요약하는 중입니다..."):
+        summary_content = get_file_summary(file_path)
+    st.markdown("### 요약 내용")
+    st.markdown(summary_content)
+
+
+## Side bar
 with st.sidebar:
     with st.expander("OpenAI API KEY"):
         openAI_API_KEY = st.text_input("OpenAI API KEY 입력")
@@ -122,12 +119,14 @@ with st.sidebar:
         st.session_state["associatedFilePaths"] = {}
         clear_session_message()
 
+## Main content
 if st.session_state["isSuccessFile"]:
     crews = Crews()
     loadFile_tabs, qna_tab, quiz_tabs = st.tabs(
         ["파일 불러오기", "질문하기", "문제 만들기"]
     )
 
+    ## Load file tab
     with loadFile_tabs:
         if st.session_state["isLoadFile"]:
             st.error(
@@ -193,14 +192,14 @@ if st.session_state["isSuccessFile"]:
                             )
                         else:
                             st.session_state["isLoadFile"] = True
-                            st.session_state["mainFilePath"] = False
-                            st.session_state["relatedFilePaths"] = [
+                            st.session_state["mainFilePath"] = ""
+                            st.session_state["chosenRelatedFilePaths"] = [
                                 False
                                 for i in range(
                                     len(fileSelectCrewResult["relatedFilePaths"])
                                 )
                             ]
-                            st.session_state["imagePaths"] = [
+                            st.session_state["chosenImagePaths"] = [
                                 False
                                 for i in range(len(fileSelectCrewResult["imagePaths"]))
                             ]
@@ -209,7 +208,8 @@ if st.session_state["isSuccessFile"]:
                                 fileSelectCrewResult
                             )
                             st.rerun()
-
+        
+        # Path selection options setting
         if st.session_state["associatedFilePaths"] != {}:
             st.markdown("## 사용할 문서를 결정해주세요!")
             with st.container(border=True):
@@ -224,8 +224,8 @@ if st.session_state["isSuccessFile"]:
                 if mainFilePath == "No files are associated." or mainFilePath == []:
                     st.error("문서가 존재하지 않습니다.")
                 else:
-                    mainFile_name = mainFilePath.split("/")[-1]
-                    st.markdown(mainFile_name)
+                    mainFileName = get_file_name(mainFilePath)
+                    st.markdown(mainFileName)
                     st.session_state["mainFilePath"] = mainFilePath
                 # 관련 문서 경로 설정
                 st.markdown("##### 관련 문서들")
@@ -234,16 +234,16 @@ if st.session_state["isSuccessFile"]:
                 else:
                     relatedFilePathsToggles = []
                     for relatedFilePath in relatedFilePaths:
-                        file_name = relatedFilePath.split("/")[-1]
-                        relatedFilePathsToggles.append(st.toggle(file_name))
+                        relatedFileName = get_file_name(relatedFilePath)
+                        relatedFilePathsToggles.append(st.toggle(relatedFileName))
 
                     for i, relatedFilePathsToggle in enumerate(relatedFilePathsToggles):
                         if relatedFilePathsToggle:
-                            st.session_state["relatedFilePaths"][i] = relatedFilePaths[
-                                i
-                            ]
+                            st.session_state["chosenRelatedFilePaths"][i] = (
+                                relatedFilePaths[i]
+                            )
                         else:
-                            st.session_state["relatedFilePaths"][i] = False
+                            st.session_state["chosenRelatedFilePaths"][i] = False
                 # 이미지 경로 설정
                 st.markdown("##### 관련 이미지들")
                 if imagePaths == []:
@@ -251,18 +251,20 @@ if st.session_state["isSuccessFile"]:
                 else:
                     imagePathsToggles = []
                     for imagePath in imagePaths:
-                        file_name = imagePath.split("/")[-1]
-                        imagePathsToggles.append(st.toggle(file_name))
+                        imageFileName = get_file_name(imagePath)
+                        imagePathsToggles.append(st.toggle(imageFileName))
 
                     for i, imagePathsToggle in enumerate(imagePathsToggles):
                         if imagePathsToggle:
-                            st.session_state["imagePaths"][i] = imagePaths[i]
+                            st.session_state["chosenImagePaths"][i] = imagePaths[i]
                         else:
-                            st.session_state["imagePaths"][i] = False
+                            st.session_state["chosenImagePaths"][i] = False
 
             st.session_state["mainFilePath"]
-            st.session_state["relatedFilePaths"]
-            st.session_state["imagePaths"]
+            st.session_state["chosenRelatedFilePaths"]
+            st.session_state["chosenImagePaths"]
+            
+    ## Q&A tab
     with qna_tab:
         left, mid, right = st.columns(3, vertical_alignment="top")
         isInclude_relatedFiles_toggle = ""
@@ -281,7 +283,6 @@ if st.session_state["isSuccessFile"]:
 
         response_container = st.container(height=800)
         input_container = st.container()
-        chains = Chains()
 
         with response_container:
             paint_history()
@@ -297,14 +298,16 @@ if st.session_state["isSuccessFile"]:
 
                     if isInclude_relatedFiles_toggle:
                         relatedFilePaths = []
-                        for relatedFilePath in st.session_state["relatedFilePaths"]:
+                        for relatedFilePath in st.session_state[
+                            "chosenRelatedFilePaths"
+                        ]:
                             if relatedFilePath != False:
                                 relatedFilePaths.append(relatedFilePath)
                         answer = get_document_refine_answer(answer, relatedFilePaths)
 
                     if isInclude_images_toggle:
                         imagePaths = []
-                        for imagePath in st.session_state["imagePaths"]:
+                        for imagePath in st.session_state["chosenImagePaths"]:
                             if imagePath != False:
                                 imagePaths.append(imagePath)
                         answer = get_image_refine_answer(answer, imagePaths)
