@@ -1,17 +1,9 @@
-HLD(Heavy Light Decomposition)을 배우기 위해서는 다음과 같은 지식이 필요합니다:
+HLD(Heavy-Light Decomposition)의 정의는 트리 구조에서 간선을 'Heavy Edge'와 'Light Edge'로 나누어 구분하는 알고리즘입니다. 이 알고리즘은 부모 노드(`u`)와 자식 노드(`v`) 간의 간선(`e`)이 있을 때, `v`의 서브 트리 크기가 `u`의 서브 트리 크기의 1/2 이상일 경우 해당 간선을 **Heavy Edge**로 정의하며, 이 외의 경우는 모두 **Light Edge**로 간주합니다. 
 
-1. **트리 구조 이해**: HLD는 트리 구조에서 작동하는 알고리즘이므로, 트리의 기본 개념과 구조를 이해해야 합니다. 특히, 부모 노드와 자식 노드의 관계, 서브트리의 개념을 알아야 합니다.
+HLD의 주요 원리는 다음과 같습니다:
+1. **Heavy Edge와 Light Edge 구분**: DFS(Depth-First Search)를 사용하여 각 노드의 서브 트리 크기를 계산하고, 이를 바탕으로 Heavy Edge와 Light Edge를 판별합니다.
+2. **구간 계산**: 나누어진 Edge를 기반으로 구간 계산을 진행하며, 이를 위해 Segment Tree를 사용합니다.
 
-2. **DFS(Depth-First Search)**: HLD의 구현 과정에서 DFS를 사용하여 각 노드의 서브트리 크기를 계산하고, Heavy Edge와 Light Edge를 구분하는 데 필요합니다. DFS의 작동 방식과 재귀적 호출에 대한 이해가 필수적입니다.
+HLD를 통해 특정 노드 `u`와 `v`를 연결하는 Light Edge는 최대 **2 * logN**개가 될 수 있으며, Light Edge를 타고 올라갈 경우 서브 트리의 크기가 2배 이상 증가하게 됩니다. 이러한 구조를 통해 HLD는 효율적으로 트리의 간선을 관리하고, 구간 쿼리를 수행할 수 있게 됩니다. 
 
-3. **서브트리 크기 계산**: 각 노드의 서브트리 크기를 계산하는 방법을 알아야 합니다. 이는 HLD에서 Heavy Edge를 정의하는 데 중요한 역할을 합니다.
-
-4. **Euler Tour Technique(ETT)**: HLD에서는 ETT를 사용하여 각 노드 또는 엣지의 구간을 정의합니다. ETT의 개념과 구현 방법을 이해해야 합니다.
-
-5. **Segment Tree**: HLD의 구간 계산을 위해 Segment Tree를 사용합니다. Segment Tree의 구조와 업데이트 및 쿼리 방법을 이해해야 합니다.
-
-6. **LCA(Lowest Common Ancestor)**: HLD의 구현에서 LCA를 사용할 수 있지만, 코드가 복잡해질 수 있으므로 개인적으로 선호하지 않는다고 언급되어 있습니다. LCA의 개념과 활용 방법도 알고 있으면 좋습니다.
-
-7. **시간 복잡도**: HLD의 시간 복잡도에 대한 이해가 필요합니다. DFS는 O(N)의 시간 복잡도를 가지며, Segment Tree의 쿼리 및 업데이트는 O(logN)입니다.
-
-이러한 지식들을 바탕으로 HLD를 배우고 구현할 수 있습니다. HLD는 복잡한 트리 쿼리를 효율적으로 처리하기 위한 강력한 도구이므로, 위의 내용을 충분히 이해하고 연습하는 것이 중요합니다.
+HLD의 구현은 복잡하지만, DFS, ETT(Euler Tour Technique), Segment Tree와 같은 기법을 활용하여 효율적인 트리 쿼리 처리를 가능하게 합니다.

@@ -2,22 +2,19 @@ import os
 import streamlit as st
 import zipfile
 from modules.crewModules import Crews
-from modules.utilles import paint_history, send_message, clear_session_message
+from modules.utilles import (
+    paint_history,
+    send_message,
+    clear_session_message,
+    preprocess_path,
+    get_docPath,
+    get_imgPath,
+    get_fileSelect,
+    get_first_answer,
+    get_document_refine_answer,
+    get_image_refine_answer,
+)
 from modules.chainModules import Chains
-
-
-def preprocess_path(docPathsList, imgPathsList):
-    docPaths = []
-    imgPaths = []
-
-    for docPath in docPathsList:
-        if os.path.isfile(docPath) and os.path.splitext(docPath)[1] == extension_name:
-            docPaths.append(docPath)
-
-    for imgPath in imgPathsList:
-        if os.path.isfile(imgPath) and os.path.splitext(imgPath)[1] != ".svg":
-            imgPaths.append(imgPath)
-    return {"docPaths": docPaths, "imgPaths": imgPaths}
 
 
 @st.dialog("파일 목록", width="large")
@@ -51,26 +48,6 @@ def get_file_summary(file_path):
     chains = Chains()
     result = chains.run_Refine_chain(file_path)
     return result
-
-
-@st.cache_data(show_spinner=False)
-def run_docPathCrew(file, extension_name):
-    docPathCrewResult = crews.run_docPathSearch(
-        extension_name=extension_name, file_path="./file"
-    )
-    return docPathCrewResult
-
-
-@st.cache_data(show_spinner=False)
-def run_imgPathCrew(file):
-    imgPathCrewResult = crews.run_imgPathSearch(img_path="./file")
-    return imgPathCrewResult
-
-
-@st.cache_data(show_spinner=False)
-def run_fileSelectCrew(file, extension_name, keyward, docPaths, imgPaths):
-    fileSelectCrewResult = crews.run_fileSelect(keyward, docPaths, imgPaths)
-    return fileSelectCrewResult
 
 
 st.set_page_config(
@@ -176,13 +153,13 @@ if st.session_state["isSuccessFile"]:
                     with st.spinner(
                         "지정된 경로에 있는 모든 파일을 불러오고 있습니다..."
                     ):
-                        docPathCrewResult = run_docPathCrew(file, extension_name)
+                        docPathCrewResult = get_docPath(file, extension_name)
                     st.write("모든 파일을 불러왔습니다.")
 
                     with st.spinner(
                         "지정된 경로에 있는 모든 이미지 파일을 불러오고 있습니다..."
                     ):
-                        imgPathCrewResult = run_imgPathCrew(file)
+                        imgPathCrewResult = get_imgPath(file)
                     st.write("모든 이미지를 불러왔습니다.")
                     if docPathCrewResult == "Error" or imgPathCrewResult == "Error":
                         status.update(
@@ -195,11 +172,12 @@ if st.session_state["isSuccessFile"]:
                         st.session_state["searchAllFilePaths"] = preprocess_path(
                             docPathCrewResult["filePaths"],
                             imgPathCrewResult["filePaths"],
+                            extension_name=extension_name,
                         )
                         with st.spinner(
                             "불러온 파일 중 키워드에 맞는 파일들을 찾고 있습니다..."
                         ):
-                            fileSelectCrewResult = run_fileSelectCrew(
+                            fileSelectCrewResult = get_fileSelect(
                                 file,
                                 extension_name,
                                 keyward,
@@ -261,7 +239,9 @@ if st.session_state["isSuccessFile"]:
 
                     for i, relatedFilePathsToggle in enumerate(relatedFilePathsToggles):
                         if relatedFilePathsToggle:
-                            st.session_state["relatedFilePaths"][i] = relatedFilePaths[i]
+                            st.session_state["relatedFilePaths"][i] = relatedFilePaths[
+                                i
+                            ]
                         else:
                             st.session_state["relatedFilePaths"][i] = False
                 # 이미지 경로 설정
@@ -311,7 +291,7 @@ if st.session_state["isSuccessFile"]:
             if question:
                 send_message(question, "human")
                 with st.spinner("질문에 대한 답을 만들고 있습니다...."):
-                    result = crews.run_questionRespondent(
+                    answer = get_first_answer(
                         question, st.session_state["mainFilePath"]
                     )
 
@@ -320,12 +300,12 @@ if st.session_state["isSuccessFile"]:
                         for relatedFilePath in st.session_state["relatedFilePaths"]:
                             if relatedFilePath != False:
                                 relatedFilePaths.append(relatedFilePath)
-                        result = crews.run_document_refine_crew(result, relatedFilePaths)
+                        answer = get_document_refine_answer(answer, relatedFilePaths)
 
                     if isInclude_images_toggle:
                         imagePaths = []
                         for imagePath in st.session_state["imagePaths"]:
                             if imagePath != False:
                                 imagePaths.append(imagePath)
-                        result = crews.run_image_refine_crew(result, imagePaths)
-                    send_message(result, "ai")
+                        answer = get_image_refine_answer(answer, imagePaths)
+                    send_message(answer, "ai")

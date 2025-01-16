@@ -311,8 +311,9 @@ class Tasks:
 
 
 class Crews:
-    agents = Agents()
-    tasks = Tasks()
+    def __init__(self):
+        self.agents = Agents()
+        self.tasks = Tasks()
 
     def run_docPathSearch(self, extension_name, file_path):
         docPathSearcher = self.agents.docPathSearcher()
@@ -507,7 +508,7 @@ class Crews:
         ).raw
         return result
 
-    def run_document_refine_crew(self, content, relatedFilePaths):
+    def run_document_refine_crew(self, existing_content, relatedFilePaths):
 
         refineRespondent = self.agents.refineRespondent()
         refineRespondent_task = self.tasks.refineRespond(refineRespondent)
@@ -526,11 +527,11 @@ class Crews:
             filePathContent = ""
             with open(relatedFilePath, "r", encoding="UTF-8") as f:
                 filePathContent = f.read()
-            content = questionRespondentCrew.kickoff(
-                dict(existing_content=content, file_content=filePathContent)
+            existing_content = questionRespondentCrew.kickoff(
+                dict(existing_content=existing_content, file_content=filePathContent)
             ).raw
 
-        return content
+        return existing_content
 
     def run_image_refine_crew(self, content, imgFilePaths):
 
