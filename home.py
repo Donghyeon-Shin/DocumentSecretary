@@ -15,6 +15,7 @@ from modules.utilles import (
     get_document_refine_answer,
     get_image_refine_answer,
     get_document_summary,
+    get_question_formmat,
     get_file_summary
 )
 
@@ -314,3 +315,11 @@ if st.session_state["isSuccessFile"]:
                                 imagePaths.append(imagePath)
                         answer = get_image_refine_answer(answer, imagePaths)
                     send_message(answer, "ai")
+    ## Q&A tab
+    with quiz_tabs:
+        st.write("퀴즈 페이지에 오신 걸 환영합니다.")
+        make_quiz_button = st.button("퀴즈 만들기")
+        if make_quiz_button:
+            with st.spinner("주어진 문서를 바탕으로 문제를 만들고 있습니다...."):
+                result = get_question_formmat(st.session_state["mainFilePath"])
+            st.write(result)

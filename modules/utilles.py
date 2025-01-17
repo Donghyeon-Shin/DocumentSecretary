@@ -45,6 +45,7 @@ def get_image_refine_answer(existing_content, imagePaths):
     result = crews.run_image_refine_crew(existing_content, imagePaths)
     return result
 
+
 @st.cache_data(show_spinner=False)
 def get_document_summary(filePath):
     result = crews.run_document_summary_crew(filePath)
@@ -53,9 +54,15 @@ def get_document_summary(filePath):
 
 ## Chain run
 @st.cache_data(show_spinner=False)
-def get_file_summary(file_path):
+def get_file_summary(filePath):
     chains = Chains()
-    result = chains.run_Refine_chain(file_path)
+    result = chains.run_Refine_chain(filePath)
+    return result
+
+@st.cache_data(show_spinner=False)
+def get_question_formmat(filePath):
+    chains = Chains()
+    result = chains.run_quiz_chain(filePath)
     return result
 
 

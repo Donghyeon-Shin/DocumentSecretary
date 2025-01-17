@@ -1,5 +1,5 @@
 import os
-import streamlit as st
+import json
 from langchain.storage import LocalFileStore
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -9,7 +9,7 @@ from langchain.text_splitter import (
     RecursiveCharacterTextSplitter,
     CharacterTextSplitter,
 )
-from langchain.schema.output_parser import StrOutputParser
+from langchain.schema.output_parser import StrOutputParser, BaseOutputParser
 from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
 from langchain.callbacks import StdOutCallbackHandler
 from langchain_community.vectorstores import FAISS
@@ -23,11 +23,16 @@ llm = ChatOpenAI(
 )
 
 
+class JsonOutputParser(BaseOutputParser):
+    def parse(self, text):
+        text = text.replace("```", "").replace("json", "")
+        return json.loads(text)
+
+
 def format_doc(document):
     return "\n\n".join(doc.page_content for doc in document)
 
 
-@st.cache_resource(show_spinner="Embedding file...")
 def embed_file(filePaths):
     # if not os.path.exists("./.cache/files"):
     #     os.makedirs("./.cache/files")
@@ -115,6 +120,163 @@ class Prompts:
         )
         return RAG_prompt
 
+    def get_questions_prompt(self):
+        questions_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """
+                    You are a helpful assistant that is role playing as a teacher.
+                    Based ONLY on the following context make 10 questoins to test the user's knowledge about the text.
+                    Each question should have 4 answers, three of them must be incorrect and one should be correct.
+                    Use (o) to signal the correct answer.
+                    
+                    Question examples
+
+                    Question: What is the color of the occean?
+                    Answers: Red|Yellow|Green|Blue(o)
+
+                    Question: What is the capital or Georgia?
+                    Answers: Baku|Tbilisi(o)|Manila|Beirut
+
+                    Question: When was Avator released?
+                    Answers: 2007|2001|2009(o)|1998
+                    
+                    Question: Who was Julius Caesar?
+                    Answers: A Roman Emperor(o)|Painter|Actor|Model
+                    
+                    Your turn!
+                    Context: {context}
+                    """,
+                )
+            ]
+        )
+        return questions_prompt
+
+    def get_formatting_prompt(self):
+        formatting_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """
+                    You are a powerful formatting algorithm.
+                    You format exam question into JSON format.
+                    
+                    Answers with (o) are the correct ones.
+
+                    Example Input:
+
+                    Question: What is the color of the occean?
+                    Answers: Red|Yellow|Green|Blue(o)
+                    
+                    Question: What is the capital or Georgia?
+                    Answers: Baku|Tbilisi(o)|Manila|Beirut
+
+                    Question: When was Avator released?
+                    Answers: 2007|2001|2009(o)|1998
+
+                    Question: Who was Julius Caesar?
+                    Answers: A Roman Emperor(o)|Painter|Actor|Model
+
+                    Example Output:
+                    ```json
+                    {{ "questions": [
+                            {{
+                                "question": "What is the color of the occean?",
+                                "answers": [
+                                    {{
+                                        "answer": "Red",
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "Yellow"
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "Green",
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "Blue",
+                                        "correct": true
+                                    }},
+                                ]
+                            }},
+                            {{
+                                "question": "What is the capital or Georgia?",
+                                "answers": [
+                                    {{
+                                        "answer": "Baku",
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "Tbilisi"
+                                        "correct": true
+                                    }},
+                                    {{
+                                        "answer": "Manila",
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "Beirut",
+                                        "correct": false
+                                    }},
+                                ]
+                            }},
+                            {{
+                                "question": "When was Avator released?",
+                                "answers": [
+                                    {{
+                                        "answer": "2007",
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "2001"
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "2009",
+                                        "correct": true
+                                    }},
+                                    {{
+                                        "answer": "1998",
+                                        "correct": false
+                                    }},
+                                ]
+                            }},
+                            {{
+                                "question": "Who was Julius Caesar?",
+                                "answers": [
+                                    {{
+                                        "answer": "A Roman Emperor",
+                                        "correct": true
+                                    }},
+                                    {{
+                                        "answer": "Painter"
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "Actor",
+                                        "correct": false
+                                    }},
+                                    {{
+                                        "answer": "Model",
+                                        "correct": false
+                                    }},
+                                ]
+                            }}                                                
+                        ]
+                    }}```
+
+                    Your turn!
+
+                    Question : {context}
+                    """,
+                )
+            ]
+        )
+        return formatting_prompt
+
 
 class Chains:
     prompts = Prompts()
@@ -156,3 +318,19 @@ class Chains:
         )
         answer = main_RAG_chain.invoke(question)
         return answer
+
+    def run_quiz_chain(self, filePath):
+        doc = ""
+        if os.path.isfile(filePath):
+            with open(filePath, "r", encoding="UTF-8") as f:
+                doc = f.read()
+        else:
+            return "Error"
+
+        questions_prompt = self.prompts.get_questions_prompt()
+        formatting_prompt = self.prompts.get_formatting_prompt()
+        output_parser = JsonOutputParser()
+        questions_chain = questions_prompt | llm
+        formatting_chain = formatting_prompt | llm
+        chain = {"context": questions_chain} | formatting_chain | output_parser
+        return chain.invoke(doc)
