@@ -1,4 +1,5 @@
 import os
+import time
 import streamlit as st
 import zipfile
 from modules.crewModules import Crews
@@ -15,8 +16,8 @@ from modules.utilles import (
     get_document_refine_answer,
     get_image_refine_answer,
     get_document_summary,
-    get_question_formmat,
-    get_file_summary
+    get_quiz_json,
+    get_file_summary,
 )
 
 
@@ -42,6 +43,15 @@ if "searchAllFilePaths" not in st.session_state:
 if "associatedFilePaths" not in st.session_state:
     st.session_state["associatedFilePaths"] = {}
 
+if "start_status" not in st.session_state:
+    st.session_state["start_status"] = False
+
+if "quiz_json" not in st.session_state:
+    st.session_state["quiz_json"] = {}
+
+if "quiz_change_value" not in st.session_state:
+    st.session_state["quiz_change_value"] = 0
+
 ## Page title, Header setting
 st.set_page_config(
     page_title="Document J.A.R.V.I.S.",
@@ -57,6 +67,7 @@ st.markdown(
     '사이드 바'에 정리한 문서들을 Zip 형태로 넣어주세요.\n
     """
 )
+
 
 ## Dialog
 @st.dialog("파일 목록", width="large")
@@ -80,7 +91,7 @@ def view_all_file_path():
 @st.dialog("문서 요약", width="large")
 def view_file_summary(file_path):
     with st.spinner("문서를 요약하는 중입니다..."):
-        #summary_content = get_file_summary(file_path)
+        # summary_content = get_file_summary(file_path)
         summary_content = get_document_summary(file_path)
     st.markdown("### 요약 내용")
     st.markdown(summary_content)
@@ -120,6 +131,9 @@ with st.sidebar:
         st.session_state["isLoadFile"] = False
         st.session_state["searchAllFilePaths"] = {}
         st.session_state["associatedFilePaths"] = {}
+        st.session_state["start_status"] = False
+        st.session_state["quiz_json"] = {}
+        st.session_state["quiz_change_value"] = 0
         clear_session_message()
 
 ## Main content
@@ -211,7 +225,7 @@ if st.session_state["isSuccessFile"]:
                                 fileSelectCrewResult
                             )
                             st.rerun()
-        
+
         # Path selection options setting
         if st.session_state["associatedFilePaths"] != {}:
             st.markdown("## 사용할 문서를 결정해주세요!")
@@ -262,11 +276,6 @@ if st.session_state["isSuccessFile"]:
                             st.session_state["chosenImagePaths"][i] = imagePaths[i]
                         else:
                             st.session_state["chosenImagePaths"][i] = False
-
-            st.session_state["mainFilePath"]
-            st.session_state["chosenRelatedFilePaths"]
-            st.session_state["chosenImagePaths"]
-            
     ## Q&A tab
     with qna_tab:
         left, mid, right = st.columns(3, vertical_alignment="top")
@@ -317,9 +326,73 @@ if st.session_state["isSuccessFile"]:
                     send_message(answer, "ai")
     ## Q&A tab
     with quiz_tabs:
-        st.write("퀴즈 페이지에 오신 걸 환영합니다.")
-        make_quiz_button = st.button("퀴즈 만들기")
-        if make_quiz_button:
-            with st.spinner("주어진 문서를 바탕으로 문제를 만들고 있습니다...."):
-                result = get_question_formmat(st.session_state["mainFilePath"])
-            st.write(result)
+        if not st.session_state["start_status"]:
+            st.write("퀴즈 페이지에 오신 걸 환영합니다.")
+            difficulty = None
+            make_quiz_button = None
+
+            left, right = st.columns(2, vertical_alignment="bottom")
+
+            with left:
+                difficulty = st.selectbox(
+                    "Choose quiz difficulty.", options=["Easy", "Hard"]
+                )
+            with right:
+                make_quiz_button = st.button("퀴즈 만들기")
+
+            if make_quiz_button:
+                with st.spinner("퀴즈를 만들고 있습니다..."):
+                    quiz_json = get_quiz_json(
+                        st.session_state["mainFilePath"],
+                        difficulty,
+                        st.session_state["quiz_change_value"],
+                    )
+                if quiz_json == "Error":
+                    st.error("파일을 가져오는데 실패했습니다.")
+                    st.session_state["start_status"] = False
+                else:
+                    st.session_state["quiz_json"] = quiz_json
+                    st.session_state["start_status"] = True
+                    st.rerun()
+        else:
+            with st.sidebar:
+                reset_button = st.button("Restart Quiz")
+                if reset_button:
+                    st.session_state["start_status"] = False
+                    st.session_state["quiz_json"] = []
+                    st.session_state["quiz_change_value"] = (
+                        st.session_state["quiz_change_value"] + 1
+                    )
+                    st.rerun()
+
+            with st.form("quiz_form"):
+                correct_cnt = 0
+                radio_key_value = 0
+                questions = st.session_state["quiz_json"]
+                radioList = []
+                for question in questions:
+                    st.write(question["question"])
+                    value = st.radio(
+                        "Select an answer",
+                        [answer["answer"] for answer in question["answers"]],
+                        index=None,
+                        key=radio_key_value,
+                    )
+                    radio_key_value = radio_key_value + 1
+                    if {"answer": value, "correct": True} in question["answers"]:
+                        correct_cnt = correct_cnt + 1
+                        st.success("Correct!")
+                    elif value != None:
+                        st.error("Wrong")
+
+                if correct_cnt == len(questions):
+                    st.session_state["start_status"] = False
+                    st.session_state["quiz_change_value"] = (
+                        st.session_state["quiz_change_value"] + 1
+                    )
+                    st.balloons()
+                    st.toast("You are perfect!", icon="🎉")
+                    time.sleep(2)
+                    st.rerun()
+
+                st.form_submit_button("Submit")

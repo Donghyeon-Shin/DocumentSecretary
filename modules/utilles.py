@@ -176,6 +176,8 @@ def get_image_refine_answer(existing_content, imagePaths):
 @st.cache_data(show_spinner=False)
 def get_document_summary(filePath):
     filePathContent = get_file_content(filePath, "r", "UTF-8", False)
+    if filePathContent == "Error":
+        return "Error"
     result = crews.run_document_summary_crew(filePathContent)
     return result
 
@@ -189,10 +191,32 @@ def get_file_summary(filePath):
 
 
 @st.cache_data(show_spinner=False)
-def get_question_formmat(filePath):
+def get_quiz_json(filePath, difficulty, change_value):
     chains = Chains()
-    result = chains.run_quiz_chain(filePath)
-    return result
+    filePathContent = get_file_content(filePath, "r", "UTF-8", False)
+    if filePathContent == "Error":
+        return "Error"
+    response = chains.run_quiz_chain(filePathContent, difficulty)
+    quiz_json = json.loads(response.additional_kwargs["function_call"]["arguments"])
+
+    filterQuestions = []
+    for question in quiz_json["questions"]:
+        falseCnt = 0
+        trueCnt = 0
+        for answer in question["answers"]:
+            # Remove (o)
+            answer["answer"] = answer["answer"].replace("(o)", "")
+            # Check Answers
+            if answer["correct"]:
+                trueCnt = trueCnt + 1
+            else:
+                falseCnt = falseCnt + 1
+
+        if falseCnt == 3 and trueCnt == 1:
+            filterQuestions.append(
+                {"question": question["question"], "answers": question["answers"]}
+            )
+    return filterQuestions
 
 
 if "messages" not in st.session_state:
