@@ -1,14 +1,12 @@
 {
   "relatedFiles": [
-    "./Study/Algorithm/Algorithm Content/Graph Theory/DFS(Depth-First Search).md",
-    "./Study/Algorithm/Algorithm Content/Tree/ETT(Euler Tour Technique).md",
+    "./Study/Algorithm/Algorithm Content/Tree/Lazy Segment Tree.md",
     "./Study/Algorithm/Algorithm Content/Tree/Segment Tree.md",
-    "./Study/Algorithm/Algorithm Content/Tree/LCA(Lowest Common Ancestor).md"
+    "./Study/Algorithm/Algorithm Content/Tree/Fenwick Tree.md"
   ],
   "imageFiles": [
-    "./Study/Algorithm/Reference/Tree Reference/ETT Ref/ETT Graph.png",
-    "./Study/Algorithm/Reference/Tree Reference/Segment Tree Ref/Segment Tree Graph.png",
-    "./Study/Algorithm/Reference/Tree Reference/LCA Ref/LCA Graph.png",
-    "./Study/Algorithm/Reference/Graph Theory Reference/DFS Ref/DFS Recursion.png"
+    "./Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Struct Graph.png",
+    "./Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Range Update & Point Query Graph.png",
+    "./Study/Algorithm/Reference/Tree Reference/Fenwick Tree Ref/Fenwick Tree Partial Sum Graph.png"
   ]
 }

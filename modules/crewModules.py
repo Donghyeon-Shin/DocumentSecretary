@@ -361,20 +361,6 @@ class Crews:
             )
         )
 
-        try:
-            with open("./docPath.md", "r", encoding="UTF-8") as f:
-                filePathContent = f.read()
-            filePathResultJson = json.loads(filePathContent)
-            filePathsList = filePathResultJson["filePaths"]
-            filePaths = []
-            for filePath in filePathsList:
-                filePaths.append(filePath.replace("\\", "/"))
-            result = {"filePaths": filePaths}
-            return result
-        except Exception as e:
-            print(e)
-            return "Error"
-
     def run_imgPathSearch(self, img_path):
         imgPathSearcher = self.agents.imgPathSearcher()
         imgPathSearcher_task = self.tasks.imgPathSearch(imgPathSearcher)
@@ -391,46 +377,9 @@ class Crews:
             )
         )
 
-        try:
-            with open("./ImgPath.md", "r", encoding="UTF-8") as f:
-                filePathContent = f.read()
-            filePathResultJson = json.loads(filePathContent)
-            filePathsList = filePathResultJson["filePaths"]
-            filePaths = []
-            for filePath in filePathsList:
-                filePaths.append(filePath.replace("\\", "/"))
-            result = {"filePaths": filePaths}
-            return result
-        except Exception as e:
-            print(e)
-            return "Error"
-
-    def run_fileSelect(self, keyward, docPaths: List, imgPaths: List):
-
-        docPathsStr = ""
-        docPathsDic = {}
-        for docPath in docPaths:
-            file_name = docPath.split("/")[-1]
-            docPathsDic.update({file_name: docPath})
-            docPathsStr += docPath + "\n"
-
-        imgPathsStr = ""
-        imgPathsDic = {}
-        for imgPath in imgPaths:
-            file_name = imgPath.split("/")[-1]
-            imgPathsDic.update({file_name: imgPath})
-            imgPathsStr += imgPath + "\n"
-
+    def run_mainFileSearcher(self, docPathsStr: str, keyward):
         mainFileSearcher = self.agents.mainFileSearcher()
-        fileReader = self.agents.fileReader()
-        fileSelector = self.agents.fileSelector()
-
         mainFileSearcher_task = self.tasks.mainFileSearch(mainFileSearcher)
-        fileReader_task = self.tasks.fileRead(fileReader)
-        fileSelector_task = self.tasks.fileSelect(
-            fileSelector,
-            [fileReader_task],
-        )
 
         mainFileSelectorCrew = Crew(
             agents=[
@@ -449,15 +398,15 @@ class Crews:
             )
         )
 
-        try:
-            with open("./mainFilePath.md", "r", encoding="UTF-8") as f:
-                mainFileSelectContent = f.read()
-            mainFileSelectJson = json.loads(mainFileSelectContent)
-            mainFilePath = mainFileSelectJson["mainFile"]
-            os.path.isfile(mainFilePath)
-        except Exception as e:
-            print(e)
-            return "Error"
+    def run_fileSelect(self, keyward, mainFilePath, docPathsStr, imgPathsStr):
+        fileReader = self.agents.fileReader()
+        fileSelector = self.agents.fileSelector()
+
+        fileReader_task = self.tasks.fileRead(fileReader)
+        fileSelector_task = self.tasks.fileSelect(
+            fileSelector,
+            [fileReader_task],
+        )
 
         fileSelectorCrew = Crew(
             agents=[
@@ -475,50 +424,7 @@ class Crews:
             dict(file_path=mainFilePath, docPaths=docPathsStr, imgPaths=imgPathsStr)
         )
 
-        try:
-            with open("./associateFilePath.md", "r", encoding="UTF-8") as f:
-                fileSelectContent = f.read()
-            fileSelectResultJson = json.loads(fileSelectContent)
-            relatedFilePathsList = fileSelectResultJson["relatedFiles"]
-            imagePathsList = fileSelectResultJson["imageFiles"]
-
-            # relatedFile Paths가 올바르지 않은 경우가 있어, 파일 경로 재설정
-            relatedFilePaths = []
-            for relatedFilePath in relatedFilePathsList:
-                file_name = relatedFilePath.split("/")[-1]
-                if file_name in docPathsDic:
-                    relatedFilePath = docPathsDic[file_name]
-                if os.path.isfile(relatedFilePath) and relatedFilePath != mainFilePath and not relatedFilePath in relatedFilePaths:
-                    relatedFilePaths.append(relatedFilePath)
-
-            # Image File 확장자 확인하기(중복으로 사용되어 함수로 만들어 활용해도 될 것 같음.)
-            imagePaths = []
-
-            for imgPath in imagePathsList:
-                file_name = imgPath.split("/")[-1]
-                if file_name in imgPathsDic:
-                    imgPath = imgPathsDic[file_name]
-                if os.path.isfile(imgPath) and os.path.splitext(imgPath)[1] != ".svg" and not imgPath in imagePaths:
-                    imagePaths.append(imgPath)
-
-            result = {
-                "mainFilePath": mainFilePath,
-                "relatedFilePaths": relatedFilePaths,
-                "imagePaths": imagePaths,
-            }
-            return result
-        except Exception as e:
-            print(e)
-            return "Error"
-
-    def run_questionRespondent(self, question, mainFilePath):
-        mainDoc = ""
-        if os.path.isfile(mainFilePath):
-            with open(mainFilePath, "r", encoding="UTF-8") as f:
-                mainDoc = f.read()
-        else:
-            return "Error"
-
+    def run_questionRespondent(self, question, fileContent):
         questionRespondent = self.agents.questionRespondent()
         questionRespondent_task = self.tasks.questionRespond(questionRespondent)
 
@@ -533,11 +439,11 @@ class Crews:
         )
 
         result = questionRespondentCrew.kickoff(
-            dict(question=question, content=mainDoc)
+            dict(question=question, content=fileContent)
         ).raw
         return result
 
-    def run_document_refine_crew(self, existing_content, relatedFilePaths):
+    def run_document_refine_crew(self, existing_content, relatedFileContentList):
 
         refineRespondent = self.agents.refineRespondent()
         refineRespondent_task = self.tasks.refineRespond(refineRespondent)
@@ -552,28 +458,39 @@ class Crews:
             verbose=True,
         )
 
-        for relatedFilePath in relatedFilePaths:
-            filePathContent = ""
-            with open(relatedFilePath, "r", encoding="UTF-8") as f:
-                filePathContent = f.read()
+        for relatedFileContent in relatedFileContentList:
             existing_content = questionRespondentCrew.kickoff(
-                dict(existing_content=existing_content, file_content=filePathContent)
+                dict(existing_content=existing_content, file_content=relatedFileContent)
             ).raw
 
         return existing_content
 
-    def run_document_summary_crew(self, filePath):
-        doc = ""
-        if os.path.isfile(filePath):
-            with open(filePath, "r", encoding="UTF-8") as f:
-                doc = f.read()
-        else:
-            return "Error"
+    def run_image_refine_crew(self, content, imgFilePaths):
 
+        imgExtracter = self.agents.imgExtracter()
+        imgExtracter_task = self.tasks.imgExtract(imgExtracter)
+
+        imgExtracterCrew = Crew(
+            agents=[
+                imgExtracter,
+            ],
+            tasks=[
+                imgExtracter_task,
+            ],
+            verbose=True,
+        )
+
+        content = imgExtracterCrew.kickoff(
+            dict(existing_content=content, img_path=imgFilePaths)
+        ).raw
+
+        return content
+
+    def run_document_summary_crew(self, fileContent):
         documentSummarizer = self.agents.documentSummarizer()
         documentSummarizer_task = self.tasks.documentSummerize(documentSummarizer)
 
-        imgExtracterCrew = Crew(
+        documentSummarizerCrew = Crew(
             agents=[
                 documentSummarizer,
             ],
@@ -583,5 +500,5 @@ class Crews:
             verbose=True,
         )
 
-        content = imgExtracterCrew.kickoff(dict(content=doc)).raw
+        content = documentSummarizerCrew.kickoff(dict(content=fileContent)).raw
         return content
