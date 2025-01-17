@@ -1,3 +1,3 @@
 {
-  "mainFile": "./file/Study/Algorithm/Algorithm Content/Tree/Lazy Segment Tree.md"
+  "mainFile": "./file/Study/Algorithm/Algorithm Content/Tree/HLD(Heavy Light Decomposition).md"
 }

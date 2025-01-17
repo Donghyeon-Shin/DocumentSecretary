@@ -38,7 +38,7 @@ class Agents:
             backstory="You are very good at finding markdown files.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_4o_mini,
+            llm=gpt_3_5,
             tools=[
                 DirectoryReadTool(),
             ],
@@ -51,7 +51,7 @@ class Agents:
             backstory="You are fluent in Korean, and you are very good at finding image files.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_4o_mini,
+            llm=gpt_3_5,
             tools=[
                 DirectoryReadTool(),
             ],
@@ -67,7 +67,7 @@ class Agents:
             backstory="You are fluent in Korean. You have a talent for finding files that seem to solve questions.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_4o_mini,
+            llm=gpt_3_5,
         )
 
     def fileReader(self):
@@ -101,7 +101,7 @@ class Agents:
             role="questionRespondent",
             goal="Answer the question in a state based on specific content.",
             backstory="You are a great teacher. You're ready to answer any questions. You are also very good at using Korean and English.",
-            llm=gpt_4o_mini,
+            llm=gpt_3_5,
             allow_delegation=False,
             verbose=True,
         )
@@ -488,7 +488,7 @@ class Crews:
                 file_name = relatedFilePath.split("/")[-1]
                 if file_name in docPathsDic:
                     relatedFilePath = docPathsDic[file_name]
-                if relatedFilePath != mainFilePath and os.path.isfile(relatedFilePath):
+                if os.path.isfile(relatedFilePath) and relatedFilePath != mainFilePath and not relatedFilePath in relatedFilePaths:
                     relatedFilePaths.append(relatedFilePath)
 
             # Image File 확장자 확인하기(중복으로 사용되어 함수로 만들어 활용해도 될 것 같음.)
@@ -498,7 +498,7 @@ class Crews:
                 file_name = imgPath.split("/")[-1]
                 if file_name in imgPathsDic:
                     imgPath = imgPathsDic[file_name]
-                if os.path.isfile(imgPath) and os.path.splitext(imgPath)[1] != ".svg":
+                if os.path.isfile(imgPath) and os.path.splitext(imgPath)[1] != ".svg" and not imgPath in imagePaths:
                     imagePaths.append(imgPath)
 
             result = {
