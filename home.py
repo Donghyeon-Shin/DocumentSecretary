@@ -1,3 +1,9 @@
+import pysqlite3 as sqlite3
+
+__import__("pysqlite3")
+import sys
+
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
 import os
 import time
 import streamlit as st
@@ -19,10 +25,7 @@ from modules.utilles import (
     get_quiz_json,
     get_file_summary,
 )
-# Setting pysqlite3
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 
 ## Session Difinition
 if "mainFilePath" not in st.session_state:
