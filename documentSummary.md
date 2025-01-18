@@ -1,21 +1,9 @@
-컨셉: 
-- Fenwick Tree는 Segment Tree의 변형 트리로, 구간의 합을 빠르게 구할 수 있는 자료구조이다. 
-- Segment Tree와 시간복잡도는 같지만, 공간복잡도는 더 적다.
+Spanning Tree는 그래프에서 Node의 개수가 n이라고 했을 때 모든 Node들이 (n-1)개의 Edge로 연결되어 있는 Tree를 뜻합니다. Spanning Tree는 DFS(Depth-First Search)나 BFS(Breadth-First Search)로 Node을 탐색하며 구할 수 있으며, 이때 Spanning Tree는 사이클이 포함되서는 안됩니다. 또한, Minimum Spanning Tree는 Nodes에 연결되어 있는 Edges 중 Cost를 고려하여 Spanning Tree 중 가장 Cost의 합이 적은 Tree를 말합니다. Minimum Spanning Tree를 구하기 위해서 Union Find와 Greed Method인 `Kruskal`알고리즘을 사용하며, MST의 시간복잡도는 `O(M*logM)`이 됩니다. (M : 간선의 개수)
 
-Fenwick Tree 원리:
-- Fenwick Tree는 Segment Tree에서 홀수 인덱스만 표기하며, BIT 연산을 통해 0이 아닌 최하위 비트를 구하여 구간의 합을 구한다.
-- 특정 비트(I)를 통해 최하위 비트를 구하는 공식은 i & -i (-i = ~i + 1)이다.
-- 구간의 합을 구하기 위해 sum(idx) 함수를 사용하고, update(idx, val) 함수를 사용하여 배열의 idx번째와 해당 idx에 해당되는 모든 구간 값을 업데이트 한다.
-- Range Update를 위해 update(l,k)와 update(r+1, -k) 함수를 사용한다.
+MST의 원리는 모든 Edges의 Cost를 기준으로 오름차순으로 정렬한 후, Cost가 작은 Edge 순서대로 이어서 Spanning Tree를 만드는 것입니다. 이 과정에서 사이클이 만들어지면 안되기 때문에 Union Find를 통해 Disjoint Set을 만들고, 두 정점이 다른 집합에 있다면 해당 간선을 연결하도록 합니다.
 
-Fenwick Tree 코드:
-- Fenwick Tree를 구현하는 코드는 BIT 연산만 이해한다면 큰 어려움은 없다.
-- 부분 합과 구간 합을 잘 구별하여 구현하여야 한다.
-- Segment Tree보다 속도 측면에서 빠르지만 응용력이 떨어져 많은 문제에서 사용되진 않는다.
+MST의 코드는 Vector 자료구조를 이용하여 Edge의 정보를 넣는데, 간선의 비용을 기준으로 정렬을 하기 때문에 Cost를 먼저 넣어주어야 합니다. Edge을 선택하는 과정에서 간선의 개수가 n-1개를 넘어서면 안되기 때문에 `kruskal()`에서 간선의 개수가 n-1이 되면 함수를 종료합니다.
 
-Fenwick Tree 응용문제:
-- Fenwick Tree를 응용하여 해결하는 문제들이 존재한다.
-- 예시로는 '8217 - 유성'과 '15957 - 음악추천' 문제가 있다.
-- '8217 - 유성' 문제는 PBS(Parallel Binary Search)에 Fenwick Tree을 응용한 문제이며, '15957 - 음악추천' 문제는 PBS에서 Fenwick Tree를 응용하는 문제이다.
+또한, MST의 응용문제로는 별자리 만들기와 행성 터널 문제가 있습니다. 이들은 각각 Priority Queue 자료구조와 좌표를 이용한 MST 알고리즘을 사용하여 해결할 수 있습니다.
 
-이러한 Fenwick Tree를 이해하고 활용하여 응용문제를 해결할 수 있다.
+이러한 내용들을 토대로 MST 알고리즘과 그 응용 문제들에 대해 자세히 설명하였습니다.

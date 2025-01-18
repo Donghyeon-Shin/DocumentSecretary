@@ -3,7 +3,6 @@
     "./file/logo.png",
     "./file/Study/Algorithm/Reference/BAEKJOON.png",
     "./file/Study/Algorithm/Reference/Array Reference/Binary Search Ref/Binary Search Flowchart.png",
-    "./file/Study/Algorithm/Reference/Array Reference/MITM Recursion Ref/MITM Recursion.png",
     "./file/Study/Algorithm/Reference/Graph Theory Reference/BASE TREE.png",
     "./file/Study/Algorithm/Reference/Graph Theory Reference/Articulation Points And Bridge Ref/Articulation Bridges graph.png",
     "./file/Study/Algorithm/Reference/Graph Theory Reference/Articulation Points And Bridge Ref/Articulation Points graph.png",
@@ -50,16 +49,6 @@
     "./file/Study/Algorithm/Reference/Unclassified Rerference/Bitmask Ref/Bitmask Graph.png",
     "./file/Study/Algorithm/Reference/Unclassified Rerference/BT Ref/BT Graph.png",
     "./file/Study/Algorithm/Reference/Unclassified Rerference/Great Problem Ref/Fish Game.png",
-    "./file/Study/Algorithm/Reference/Unclassified Rerference/Square Root Decomposition Ref/Square Root Decompositon Graph.png",
-    "./file/Study/LangChain/Reference/LangChain Icon.png",
-    "./file/Study/LangChain/Reference/Assistant Reference/Assistant Process.webp",
-    "./file/Study/LangChain/Reference/Assistant Reference/Assistants Info.png",
-    "./file/Study/LangChain/Reference/DocumentGPT Reference/Streamlit Page Detail.png",
-    "./file/Study/LangChain/Reference/Model IO Reference/Expression language Input and Output.png",
-    "./file/Study/LangChain/Reference/RAG Reference/Map Re-rank Process.png",
-    "./file/Study/LangChain/Reference/RAG Reference/Map Reduce Chain Process.jpg",
-    "./file/Study/LangChain/Reference/RAG Reference/Refine Chain Process.jpg",
-    "./file/Study/LangChain/Reference/RAG Reference/Retrieval Process.jpg",
-    "./file/Study/LangChain/Reference/RAG Reference/Stufff Chain Process.jpg"
+    "./file/Study/Algorithm/Reference/Unclassified Rerference/Square Root Decomposition Ref/Square Root Decompositon Graph.png"
   ]
 }

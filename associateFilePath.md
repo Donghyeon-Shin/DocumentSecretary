@@ -1,10 +1,10 @@
 {
   "relatedFiles": [
-    "./Study/Algorithm/Algorithm Content/Tree/Lazy Segment Tree.md",
-    "./Study/Algorithm/Algorithm Content/Tree/Segment Tree.md"
+    "./Study/Algorithm/Algorithm Content/Graph Theory/DFS(Depth-First Search).md",
+    "./Study/Algorithm/Algorithm Content/Graph Theory/BFS(Breadth-First Search).md",
+    "./Study/Algorithm/Algorithm Content/Tree/Union Find.md"
   ],
   "imageFiles": [
-    "./Study/Algorithm/Reference/Tree Reference/Lazy Segment Tree Ref/Lazy Segment Tree Graph.png",
-    "./Study/Algorithm/Reference/Tree Reference/Segment Tree Ref/Segment Tree Graph.png"
+    "./file/Study/Algorithm/Reference/Tree Reference/MST Ref/MST Graph.png"
   ]
 }
