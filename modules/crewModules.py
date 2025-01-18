@@ -4,17 +4,6 @@ from crewai import LLM, Agent, Task, Crew
 from crewai_tools import FileReadTool, DirectoryReadTool, VisionTool
 from pydantic import BaseModel
 from typing import List
-from crewai import LLM
-
-gpt_4o_mini = LLM(
-    model="gpt-4o-mini",
-    temperature=0.1,
-)
-
-gpt_3_5 = LLM(
-    model="gpt-3.5-turbo-1106",
-    temperature=0.1,
-)
 
 
 class filePath(BaseModel):
@@ -31,6 +20,20 @@ class associateFilePath(BaseModel):
 
 
 class Agents:
+
+    def __init__(self, openAI_API_KEY):
+        self.gpt_4o_mini = LLM(
+            model="gpt-4o-mini",
+            temperature=0.1,
+            api_key=openAI_API_KEY,
+        )
+
+        self.gpt_3_5 = LLM(
+            model="gpt-3.5-turbo-1106",
+            temperature=0.1,
+            api_key=openAI_API_KEY,
+        )
+
     def docPathSearcher(self):
         return Agent(
             role="docPathSearcher",
@@ -38,7 +41,7 @@ class Agents:
             backstory="You are very good at finding markdown files.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_3_5,
+            llm=self.gpt_3_5,
             tools=[
                 DirectoryReadTool(),
             ],
@@ -51,7 +54,7 @@ class Agents:
             backstory="You are fluent in Korean, and you are very good at finding image files.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_3_5,
+            llm=self.gpt_3_5,
             tools=[
                 DirectoryReadTool(),
             ],
@@ -67,7 +70,7 @@ class Agents:
             backstory="You are fluent in Korean. You have a talent for finding files that seem to solve questions.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_3_5,
+            llm=self.gpt_3_5,
         )
 
     def fileReader(self):
@@ -80,7 +83,7 @@ class Agents:
             backstory="You are fluent in Korean. You are a bookworm.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_3_5,
+            llm=self.gpt_3_5,
             tools=[
                 FileReadTool(),
             ],
@@ -91,7 +94,7 @@ class Agents:
             role="fileSelector",
             goal="Find out the path of all other files that correspond to the document and print them out.",
             backstory="You are a file search expert and fluent in Korean. You have a great ability to read and analyze the details of the file.",
-            llm=gpt_4o_mini,
+            llm=self.gpt_4o_mini,
             allow_delegation=False,
             verbose=True,
         )
@@ -101,7 +104,7 @@ class Agents:
             role="questionRespondent",
             goal="Answer the question in a state based on specific content.",
             backstory="You are a great teacher. You're ready to answer any questions. You are also very good at using Korean and English.",
-            llm=gpt_3_5,
+            llm=self.gpt_3_5,
             allow_delegation=False,
             verbose=True,
         )
@@ -113,7 +116,7 @@ class Agents:
             backstory="You are fluent in Korean, and You want the answer to be structured to make it easier for users to understand.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_3_5,
+            llm=self.gpt_3_5,
         )
 
     def imgExtracter(self):
@@ -123,7 +126,7 @@ class Agents:
             backstory="You are fluent in Korean, and You have a good ability to read images and convert them into text.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_3_5,
+            llm=self.gpt_3_5,
             tools=[
                 VisionTool(),
             ],
@@ -136,7 +139,7 @@ class Agents:
             backstory="You are fluent in Korean, and You have a tremendous ability to understand and summarize the contents of the document.",
             allow_delegation=False,
             verbose=True,
-            llm=gpt_3_5,
+            llm=self.gpt_3_5,
         )
 
 
@@ -340,8 +343,8 @@ class Tasks:
 
 
 class Crews:
-    def __init__(self):
-        self.agents = Agents()
+    def __init__(self, openAI_API_KEY):
+        self.agents = Agents(openAI_API_KEY)
         self.tasks = Tasks()
 
     def run_docPathSearch(self, extension_name, file_path):

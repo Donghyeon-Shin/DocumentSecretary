@@ -148,7 +148,7 @@ with st.sidebar:
 
 ## Main content
 if st.session_state["isSuccessFile"] and st.session_state["openAI_API_KEY"].startswith("sk-"):
-    crews = Crews()
+    crews = Crews(st.session_state["openAI_API_KEY"])
     loadFile_tabs, qna_tab, quiz_tabs = st.tabs(
         ["파일 불러오기", "질문하기", "문제 만들기"]
     )
