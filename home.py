@@ -28,6 +28,9 @@ from modules.utilles import (
 
 
 ## Session Difinition
+if "openAI_API_KEY" not in st.session_state:
+    st.session_state["openAI_API_KEY"] = ""
+
 if "mainFilePath" not in st.session_state:
     st.session_state["mainFilePath"] = ""
 
@@ -107,6 +110,7 @@ def view_file_summary(file_path):
 with st.sidebar:
     with st.expander("OpenAI API KEY"):
         openAI_API_KEY = st.text_input("OpenAI API KEY 입력")
+        st.session_state["openAI_API_KEY"] = openAI_API_KEY
     file = st.file_uploader("문서 경로를 지정해주세요.", type="zip")
     if st.session_state["isLoadFile"]:
         view_all_file_path_button = st.button("불러온 파일들 보기")
@@ -143,7 +147,7 @@ with st.sidebar:
         clear_session_message()
 
 ## Main content
-if st.session_state["isSuccessFile"]:
+if st.session_state["isSuccessFile"] and st.session_state["openAI_API_KEY"].startswith("sk-"):
     crews = Crews()
     loadFile_tabs, qna_tab, quiz_tabs = st.tabs(
         ["파일 불러오기", "질문하기", "문제 만들기"]
