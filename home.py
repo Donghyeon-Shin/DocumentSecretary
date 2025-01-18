@@ -365,6 +365,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                     quiz_json = get_quiz_json(
                         st.session_state["mainFilePath"],
                         difficulty,
+                        openAI_API_KEY,
                         st.session_state["quiz_change_value"],
                     )
                 if quiz_json == "Error":
@@ -416,3 +417,5 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                     st.rerun()
 
                 st.form_submit_button("Submit")
+else:
+    st.error("파일을 불러오지 못했거나 OpenAI API Key를 불러오지 못했습니다.", icon="⚠️")

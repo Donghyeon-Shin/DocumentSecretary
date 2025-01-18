@@ -195,12 +195,12 @@ def get_file_summary(filePath):
 
 
 @st.cache_data(show_spinner=False)
-def get_quiz_json(filePath, difficulty, change_value):
+def get_quiz_json(filePath, difficulty, openAI_API_KEY, change_value):
     chains = Chains()
     filePathContent = get_file_content(filePath, "r", "UTF-8", False)
     if filePathContent == "Error":
         return "Error"
-    response = chains.run_quiz_chain(filePathContent, difficulty)
+    response = chains.run_quiz_chain(filePathContent, difficulty, openAI_API_KEY)
     quiz_json = json.loads(response.additional_kwargs["function_call"]["arguments"])
 
     filterQuestions = []
