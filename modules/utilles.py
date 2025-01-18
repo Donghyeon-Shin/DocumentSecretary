@@ -40,11 +40,9 @@ def get_file_content(filePath, readMod, encoding, isJson=True):
 
 
 ## Crew run
-crews = Crews()
-
-
 @st.cache_data(show_spinner=False)
-def get_docPath(file, extension_name):
+def get_docPath(file, extension_name, openAI_API_KEY):
+    crews = Crews(openAI_API_KEY)
     crews.run_docPathSearch(extension_name=extension_name, file_path="./file")
     filePathResultJson = get_file_content("./docPath.md", "r", "UTF-8")
     if filePathResultJson != "Error":
@@ -59,7 +57,8 @@ def get_docPath(file, extension_name):
 
 
 @st.cache_data(show_spinner=False)
-def get_imgPath(file):
+def get_imgPath(file, openAI_API_KEY):
+    crews = Crews(openAI_API_KEY)
     crews.run_imgPathSearch(img_path="./file")
     filePathResultJson = get_file_content("./ImgPath.md", "r", "UTF-8")
     if filePathResultJson != "Error":
@@ -74,7 +73,8 @@ def get_imgPath(file):
 
 
 @st.cache_data(show_spinner=False)
-def get_fileSelect(file, extension_name, keyward, docPaths, imgPaths):
+def get_fileSelect(file, extension_name, keyward, docPaths, imgPaths, openAI_API_KEY):
+    crews = Crews(openAI_API_KEY)
     # Path convert to String
     docPathsStr = ""
     docPathsDic = {}
@@ -145,7 +145,8 @@ def get_fileSelect(file, extension_name, keyward, docPaths, imgPaths):
 
 
 @st.cache_data(show_spinner=False)
-def get_first_answer(question, mainFilePath):
+def get_first_answer(question, mainFilePath, openAI_API_KEY):
+    crews = Crews(openAI_API_KEY)
     mainDoc = get_file_content(mainFilePath, "r", "UTF-8", False)
     if mainDoc == "Error":
         return "Error"
@@ -154,7 +155,8 @@ def get_first_answer(question, mainFilePath):
 
 
 @st.cache_data(show_spinner=False)
-def get_document_refine_answer(existing_content, relatedFilePaths):
+def get_document_refine_answer(existing_content, relatedFilePaths, openAI_API_KEY):
+    crews = Crews(openAI_API_KEY)
     relatedFileContentList = []
     for relatedFilePath in relatedFilePaths:
         filePathContent = get_file_content(relatedFilePath, "r", "UTF-8", False)
@@ -168,13 +170,15 @@ def get_document_refine_answer(existing_content, relatedFilePaths):
 
 
 @st.cache_data(show_spinner=False)
-def get_image_refine_answer(existing_content, imagePaths):
+def get_image_refine_answer(existing_content, imagePaths, openAI_API_KEY):
+    crews = Crews(openAI_API_KEY)
     result = crews.run_image_refine_crew(existing_content, imagePaths)
     return result
 
 
 @st.cache_data(show_spinner=False)
-def get_document_summary(filePath):
+def get_document_summary(filePath, openAI_API_KEY):
+    crews = Crews(openAI_API_KEY)
     filePathContent = get_file_content(filePath, "r", "UTF-8", False)
     if filePathContent == "Error":
         return "Error"

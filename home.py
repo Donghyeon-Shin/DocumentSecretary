@@ -28,9 +28,6 @@ from modules.utilles import (
 
 
 ## Session Difinition
-if "openAI_API_KEY" not in st.session_state:
-    st.session_state["openAI_API_KEY"] = ""
-
 if "mainFilePath" not in st.session_state:
     st.session_state["mainFilePath"] = ""
 
@@ -101,7 +98,7 @@ def view_all_file_path():
 def view_file_summary(file_path):
     with st.spinner("문서를 요약하는 중입니다..."):
         # summary_content = get_file_summary(file_path)
-        summary_content = get_document_summary(file_path)
+        summary_content = get_document_summary(file_path, openAI_API_KEY)
     st.markdown("### 요약 내용")
     st.markdown(summary_content)
 
@@ -110,7 +107,6 @@ def view_file_summary(file_path):
 with st.sidebar:
     with st.expander("OpenAI API KEY"):
         openAI_API_KEY = st.text_input("OpenAI API KEY 입력")
-        st.session_state["openAI_API_KEY"] = openAI_API_KEY
     file = st.file_uploader("문서 경로를 지정해주세요.", type="zip")
     if st.session_state["isLoadFile"]:
         view_all_file_path_button = st.button("불러온 파일들 보기")
@@ -147,8 +143,7 @@ with st.sidebar:
         clear_session_message()
 
 ## Main content
-if st.session_state["isSuccessFile"] and st.session_state["openAI_API_KEY"].startswith("sk-"):
-    crews = Crews(st.session_state["openAI_API_KEY"])
+if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
     loadFile_tabs, qna_tab, quiz_tabs = st.tabs(
         ["파일 불러오기", "질문하기", "문제 만들기"]
     )
@@ -179,13 +174,17 @@ if st.session_state["isSuccessFile"] and st.session_state["openAI_API_KEY"].star
                     with st.spinner(
                         "지정된 경로에 있는 모든 파일을 불러오고 있습니다..."
                     ):
-                        docPathCrewResult = get_docPath(file, extension_name)
+                        docPathCrewResult = get_docPath(
+                            file,
+                            extension_name,
+                            openAI_API_KEY,
+                        )
                     st.write("모든 파일을 불러왔습니다.")
 
                     with st.spinner(
                         "지정된 경로에 있는 모든 이미지 파일을 불러오고 있습니다..."
                     ):
-                        imgPathCrewResult = get_imgPath(file)
+                        imgPathCrewResult = get_imgPath(file, openAI_API_KEY)
                     st.write("모든 이미지를 불러왔습니다.")
                     if docPathCrewResult == "Error" or imgPathCrewResult == "Error":
                         status.update(
@@ -209,6 +208,7 @@ if st.session_state["isSuccessFile"] and st.session_state["openAI_API_KEY"].star
                                 keyward,
                                 st.session_state["searchAllFilePaths"]["docPaths"],
                                 st.session_state["searchAllFilePaths"]["imgPaths"],
+                                openAI_API_KEY,
                             )
                         st.write("키워드에 맞는 파일들을 모두 찾았습니다.")
                         if fileSelectCrewResult == "Error":
@@ -315,7 +315,9 @@ if st.session_state["isSuccessFile"] and st.session_state["openAI_API_KEY"].star
                 send_message(question, "human")
                 with st.spinner("질문에 대한 답을 만들고 있습니다...."):
                     answer = get_first_answer(
-                        question, st.session_state["mainFilePath"]
+                        question,
+                        st.session_state["mainFilePath"],
+                        openAI_API_KEY,
                     )
 
                     if isInclude_relatedFiles_toggle:
@@ -325,14 +327,22 @@ if st.session_state["isSuccessFile"] and st.session_state["openAI_API_KEY"].star
                         ]:
                             if relatedFilePath != False:
                                 relatedFilePaths.append(relatedFilePath)
-                        answer = get_document_refine_answer(answer, relatedFilePaths)
+                        answer = get_document_refine_answer(
+                            answer,
+                            relatedFilePaths,
+                            openAI_API_KEY,
+                        )
 
                     if isInclude_images_toggle:
                         imagePaths = []
                         for imagePath in st.session_state["chosenImagePaths"]:
                             if imagePath != False:
                                 imagePaths.append(imagePath)
-                        answer = get_image_refine_answer(answer, imagePaths)
+                        answer = get_image_refine_answer(
+                            answer,
+                            imagePaths,
+                            openAI_API_KEY,
+                        )
                     send_message(answer, "ai")
     ## Q&A tab
     with quiz_tabs:
