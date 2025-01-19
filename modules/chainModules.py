@@ -43,7 +43,7 @@ format_function = {
                     },
                     "required": ["question", "answers"],
                 },
-            }
+            },
         },
         "required": ["questions"],
     },
@@ -130,7 +130,7 @@ class Chains:
     def run_quiz_chain(self, fileContent, difficulty, openAI_API_KEY):
         llm = ChatOpenAI(
             temperature=0.1,
-            model="gpt-3.5-turbo-0125",
+            model="gpt-4o-mini",
             api_key=openAI_API_KEY,
         ).bind(
             function_call={

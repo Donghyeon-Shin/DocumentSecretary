@@ -11,6 +11,7 @@ import zipfile
 from modules.crewModules import Crews
 from modules.utilles import (
     paint_history,
+    paint_error,
     send_message,
     clear_session_message,
     preprocess_path,
@@ -23,7 +24,6 @@ from modules.utilles import (
     get_image_refine_answer,
     get_document_summary,
     get_quiz_json,
-    get_file_summary,
 )
 
 
@@ -112,7 +112,7 @@ with st.sidebar:
         view_all_file_path_button = st.button("불러온 파일들 보기")
         if view_all_file_path_button:
             if st.session_state["searchAllFilePaths"] == {}:
-                st.error("관련된 파일이 존재하지 않습니다..!")
+                paint_error("관련된 파일이 존재하지 않습니다..!")
             else:
                 view_all_file_path()
         file_reset_button = st.button("파일 경로 RESET")
@@ -127,7 +127,7 @@ with st.sidebar:
                 zip_file.extractall("./file")
                 st.session_state["isSuccessFile"] = True
             except:
-                st.error(
+                paint_error(
                     "파일을 Load 할 수 없습니다.\n 올바른 Zip 파일을 불러와주세요."
                 )
                 st.session_state["isSuccessFile"] = False
@@ -151,7 +151,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
     ## Load file tab
     with loadFile_tabs:
         if st.session_state["isLoadFile"]:
-            st.error(
+            paint_error(
                 "이미 파일을 로드하였어요!!\n\n불러온 파일 경로는 수정하시려면 확장자를 변경하거나 '사이드 바'에 있는 버튼을 눌러주세요.\n\n동일 파일 내의 검색을 하길 원하시면 키워드를 바꿔 검색해주세요."
             )
         with st.form("file_option_form"):
@@ -170,6 +170,9 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
 
             if doc_search_button:
                 with st.status("파일을 불러오기...", expanded=True) as status:
+                    isSuccessLoadDocPath = False
+                    isSuccessLoadImagPath = False
+                    isSuccessSelectFile = False
                     # 파일 경로 Load
                     with st.spinner(
                         "지정된 경로에 있는 모든 파일을 불러오고 있습니다..."
@@ -179,29 +182,43 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                             extension_name,
                             openAI_API_KEY,
                         )
-                    st.write("모든 파일을 불러왔습니다.")
+                        if docPathCrewResult == "Error":
+                            status.update(
+                                label="파일을 불러오는데 오류가 발생했습니다.",
+                                expanded=False,
+                                state="error",
+                            )
+                        else:
+                            isSuccessLoadDocPath = True
+                            st.write("모든 파일을 불러왔습니다.")
 
-                    with st.spinner(
-                        "지정된 경로에 있는 모든 이미지 파일을 불러오고 있습니다..."
-                    ):
-                        imgPathCrewResult = get_imgPath(file, openAI_API_KEY)
-                    st.write("모든 이미지를 불러왔습니다.")
-                    if docPathCrewResult == "Error" or imgPathCrewResult == "Error":
-                        status.update(
-                            label="파일을 불러오는데 오류가 발생했습니다.",
-                            expanded=False,
-                            state="error",
-                        )
-                    else:
+                    if isSuccessLoadDocPath:
+                        with st.spinner(
+                            "지정된 경로에 있는 모든 이미지 파일을 불러오고 있습니다..."
+                        ):
+                            imgPathCrewResult = get_imgPath(file, openAI_API_KEY)
+                        st.write("모든 이미지를 불러왔습니다.")
+                        if imgPathCrewResult == "Error":
+                            status.update(
+                                label="파일을 불러오는데 오류가 발생했습니다.",
+                                expanded=False,
+                                state="error",
+                            )
+                        else:
+                            isSuccessLoadImagPath = True
+                            st.write("모든 파일을 불러왔습니다.")
+
+                    if isSuccessLoadImagPath:
                         # 키워드에 맞는 관련 파일 찾기
-                        st.session_state["searchAllFilePaths"] = preprocess_path(
-                            docPathCrewResult["filePaths"],
-                            imgPathCrewResult["filePaths"],
-                            extension_name=extension_name,
-                        )
                         with st.spinner(
                             "불러온 파일 중 키워드에 맞는 파일들을 찾고 있습니다..."
                         ):
+
+                            st.session_state["searchAllFilePaths"] = preprocess_path(
+                                docPathCrewResult["filePaths"],
+                                imgPathCrewResult["filePaths"],
+                                extension_name=extension_name,
+                            )
                             fileSelectCrewResult = get_fileSelect(
                                 file,
                                 extension_name,
@@ -218,6 +235,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                                 state="error",
                             )
                         else:
+                            isSuccessSelectFile = True
                             st.session_state["isLoadFile"] = True
                             st.session_state["mainFilePath"] = ""
                             st.session_state["chosenRelatedFilePaths"] = [
@@ -230,7 +248,10 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                                 False
                                 for i in range(len(fileSelectCrewResult["imagePaths"]))
                             ]
-                            status.update(label="파일을 불러왔습니다.", expanded=False)
+                            status.update(
+                                label="파일을 불러왔습니다.",
+                                expanded=False,
+                            )
                             st.session_state["associatedFilePaths"] = (
                                 fileSelectCrewResult
                             )
@@ -249,7 +270,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                 # 핵심 문서 경로 설정
                 st.markdown("##### 핵심 문서")
                 if mainFilePath == "No files are associated." or mainFilePath == []:
-                    st.error("문서가 존재하지 않습니다.")
+                    paint_error("문서가 존재하지 않습니다.")
                 else:
                     mainFileName = get_file_name(mainFilePath)
                     st.markdown(mainFileName)
@@ -257,7 +278,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                 # 관련 문서 경로 설정
                 st.markdown("##### 관련 문서들")
                 if relatedFilePaths == []:
-                    st.error("문서가 존재하지 않습니다.")
+                    paint_error("문서가 존재하지 않습니다.")
                 else:
                     relatedFilePathsToggles = []
                     for relatedFilePath in relatedFilePaths:
@@ -274,7 +295,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                 # 이미지 경로 설정
                 st.markdown("##### 관련 이미지들")
                 if imagePaths == []:
-                    st.error("이미지가 존재하지 않습니다.")
+                    paint_error("이미지가 존재하지 않습니다.")
                 else:
                     imagePathsToggles = []
                     for imagePath in imagePaths:
@@ -369,7 +390,6 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                         st.session_state["quiz_change_value"],
                     )
                 if quiz_json == "Error":
-                    st.error("파일을 가져오는데 실패했습니다.")
                     st.session_state["start_status"] = False
                 else:
                     st.session_state["quiz_json"] = quiz_json
@@ -404,7 +424,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                         correct_cnt = correct_cnt + 1
                         st.success("Correct!")
                     elif value != None:
-                        st.error("Wrong")
+                        st.warning("Wrong")
 
                 if correct_cnt == len(questions):
                     st.session_state["start_status"] = False
@@ -417,5 +437,3 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                     st.rerun()
 
                 st.form_submit_button("Submit")
-else:
-    st.error("파일을 불러오지 못했거나 OpenAI API Key를 불러오지 못했습니다.", icon="⚠️")

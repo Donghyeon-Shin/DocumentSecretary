@@ -54,7 +54,7 @@ class Agents:
             backstory="You are fluent in Korean, and you are very good at finding image files.",
             allow_delegation=False,
             verbose=True,
-            llm=self.gpt_4o_mini,
+            llm=self.gpt_3_5,
             tools=[
                 DirectoryReadTool(),
             ],

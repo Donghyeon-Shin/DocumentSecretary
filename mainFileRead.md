@@ -1,238 +1,383 @@
+The content of the file "Fenwick Tree.md" is as follows:
+
 # Concept
-- Spanning Tree는 그래프에서 Node의 개수가 n이라고 했을 때 모든 Node들이 (n-1)개의 Edge로 연결되어 있는 Tree를 뜻한다.
-- Spanning Tree는 [[DFS(Depth-First Search)]]나 [[BFS(Breadth-First Search)]]로 Node을 탐색하며 구할 수 있다. 이때 Spanning Tree는 사이클이 포함되서는 안된다.
-- Minimum Spanning Tree는 Nodes에 연결되어 있는 Edges 중 Cost를 고려하여 Spanning Tree 중 가장 Cost의 합이 적은 Tree를 말한다.
-- Minimum Spanning Tree를 구하기 위해서 [[Union Find]]와 Greed Method인 `Kruskal`알고리즘을 사용한다.
-- MST의 시간복잡도는 `O(M*logM)`이다. (M : 간선의 개수)
-# MST 원리
-- 모든 Edges의 Cost를 기준으로 오름차순으로 정렬한다, 그 후 Cost가 작은 Edge 순서대로 이어서 Spanning Tree를 만든다.
-- 이 과정에서 사이클이 만들어지면 안되기 때문에 [[Union Find]]를 통해 `Disjoint Set`을 만들고, 두 정점이 다른 집합에 있다면 해당 간선을 연결하도록 한다.
-#### 🖼️그림으로 이해하기
-![[MST Graph.svg]]
-# MST CODE(📑[1197 - 최소 스패닝 트리](https://www.acmicpc.net/problem/1197))
-- Vector 자료구조를 이용하여 Edge의 정보를 넣는데 간선의 비용을 기준으로 정렬을 하기 때문에 Cost를 먼저 넣어주어야 한다.
-- Edge을 선택하는 과정에서 간선의 개수가 n-1개를 넘어서면 안되기 때문에 `kruskal()`에서 간선의 개수가 n-1이 되면 함수를 종료한다.
-#### ⌨️ Code
+- `Binary Indexed Tree(BIT)`라고도 불린다.
+- [[Segment Tree]]의 변형 트리로 구간의 합을 빠르게 구할 수 있다는 특징이 있다.
+- 시간복잡도는 Segment Tree와 같은 `O(logN)`이지만 공간복잡도는 `O(n)`으로 Segment Tree보다 더 적다.
+- 시간복잡도 자체는 Segment Tree와 같다고 해도 실제론 조금 더 빠르게 작동하게 되는데 선형적으로 `Lazy Segment Tree ≒ 2 * Segment Tree / Segment Tree ≒ 2 * Fenwick Tree`이다.
+# Fenwick Tree 원리
+- Fenwick Tree는 Segment Tree에서 홀수 인덱스만 표기한다.(밑 그림 참조)
+- 모든 구간들은  BIT 연산을 통해 0이 아닌 최하위 비트(같은 높이의 맨좌측 비트)를 구함으로써 해결할 수 있다. 
+- 특정 비트(I)를 통해 최하위 비트를 구하는 공식은 `i & -i (-i = ~i + 1)`이다.
+- ex) i = (1101)2 -> ~i = (0010)2 -> -i = (0011)2 -> i & -i = (0001)2
+#### 🖼️Segment Tree와 Fenwick Tree 구조 비교
+![[Fenwick Tree Struct Graph.svg]]
+- Fenwick Tree에 필요한 기능은 크게 2가지가 있다.
+	1. sum(idx) : `[1~idx]` 범위에 있는 값들의 합을 Return 한다.
+	2. update(idx, val) :  배열의 idx번째와 해당 idx에 해당되는 모든 구간 값을 업데이트 한다.
+- 특정 비트(i)에 최하위 비트가 0이 되기 전까지 빼면 구간의 합을 구할 수 있다. `i -= (i & -i)`
+- 특정 비트(i)에 최하위 비트가 특정 값(m) 될 때까지 더하면 구간을 업데이트  할 수 있다. `i += (i & -i)`
+- 특정 구간 `[l,r]`의 합을 구하기 위해서 **sum(r) - sum(l-1)** 로 계산한다.
+- sum을 하는 과정은 오른쪽 대각선으로 올라가는 것이고, update는 왼쪽 위로 올라가는 과정으로 생각하면 이해하기 편하다.
+- Range Update 즉, `[l,r]` 의 값에 k를 더하기 하기 위해서 **update(l,k) , update(r+1, -k)** 료 계산한다.
+	- 이러한 계산은 Point Query`(array[idx])`를 편하게 구하기 위함이다.
+	- Point Query 을 구하기 위해선 단순히 sum(idx)을 구하면 된다.
+	- update(l,k)는 `[l,m]`까지의 모든 부분 합에 k를 더하기 된다. 
+	- update(r+1, -k)는 `[r+1,m]`까지의 모든 부분 합에 -k를 더하기 된다. 
+	- 두 개의 연산을 통해 `l~r`까지의 부분 합만 k가 더해지게 된다.
+#### 🖼️그림으로 이해하기(Partial Sum)
+![[Fenwick Tree Partial Sum Graph.svg]]
+#### 🖼️그림으로 이해하기(Range Update & Point Query)
+![[Fenwick Tree Range Update & Point Query Graph.svg]]
+# Fenwick Tree CODE
+- BIT 연산만 이해한다면 구현하는데 큰 어려움은 없다.
+- 부분 합과 구간 합을 잘 구별하며 구현하여야 한다.
+- Segment Tree보다 속도 측면에서 빠르지만 응용력이 떨어져 많은 문제에서 사용되진 않는다.
+#### ⌨️ Code(Partial sum)
 ```cpp
 #include <bits/stdc++.h>
 
 using namespace std;
 
-int v, e, parent[10001], weight_sum = 0, cnt = 0;
-vector<tuple<int,int,int>> tree;
+int n, q, fenwickTree[100001];
 
-int find_root(int node) {
-    if ( parent[node] == node ) return node;
-    return parent[node] = find_root(parent[node]);
-}
-
-void union_root(int n1, int n2) {
-
-    int n1_root = find_root(n1);
-    int n2_root = find_root(n2);
-
-    if ( n1_root != n2_root ) parent[n2_root] = n1_root;
-
-}
-
-void kruskal() {
-
-    for ( int i = 0; i < (int)tree.size(); i++ ) {
-        int cost = get<0>(tree[i]);
-        int n1 = get<1>(tree[i]);
-        int n2 = get<2>(tree[i]);
-
-        if ( find_root(n1) == find_root(n2) ) continue;
-
-        weight_sum += cost;
-        cnt++;
-        union_root(n1, n2);
-
-        if ( cnt == v - 1 ) return;
+void fenwickTree_Update(int idx, int val) {
+    while ( idx <= n ) {
+        fenwickTree[idx] += val;
+        idx += (idx & -idx);
     }
+}
 
+int fenwickTree_Sum(int idx) {
+    int result = 0;
+    while ( idx > 0 ) {
+        result += fenwickTree[idx];
+        idx -= (idx & -idx);
+    }
+    return result;
 }
 
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(NULL); cout.tie(NULL);
-
-    cin >> v >> e;
-    for ( int i = 0; i < e; i++ ) {
-        int n1, n2, cost;
-        cin >> n1 >> n2 >> cost;
-        tree.push_back({cost,n1,n2});
-    }
     
-    for ( int i = 1; i <= v; i++ ) parent[i] = i;
-
-    sort(tree.begin(), tree.end());
-
-    kruskal();
-    cout << weight_sum;
+    cin >> n >> q;
+    
+    while ( q-- ) {
+        int cmd;
+        cin >> cmd;
+        if ( cmd == 1 ) {
+            int idx, val;
+            cin >> idx >> val;
+            fenwickTree_Update(idx, val);
+        } else if ( cmd == 2 ) {
+            int idx;
+            cin >> idx;
+            cout << fenwickTree_Sum(idx) << '\n';
+        }
+    }
     return 0;
 }
 ```
 ##### ❓ 예제 Input
-	8 15
-	1 2 8
-	1 5 12
-	1 6 10
-	2 4 4
-	2 3 6
-	2 5 14
-	3 4 16
-	3 7 8
-	4 5 7
-	4 7 12
-	5 6 6
-	5 7 5
-	5 8 30
-	6 8 10
-	7 8 20
+	8 8
+	1 3 10
+	1 2 5
+	1 5 5
+	1 8 7
+	2 3
+	2 5
+	3 4 5
+	3 1 8
 ##### ⭐ 예제 Output
-	46
+	15
+	20
+	5
+	27
+#### ⌨️ Code(Range Update & Point Query)
 
-# MST 응용문제
-### 📑[4386 - 별자리 만들기](https://www.acmicpc.net/problem/4386)
-#### 🔓 KeyPoint
-- 별들이 각각의 Node가 되고 별들 사이의 거리가 간선의 Cost가 된다. Cost가 Input으로 주어지는 것이 아닌 직접 구하는 것임에  유의해야 한다.
-- Input 데이터를 넣을 때마다 정렬이 될 수 있게 Vector 자료 구조가 아닌 Priority Queue 자료구조를 이용했고 Priority Queue의 경우 기본이 내림차순이기 때문에 `Cost *= -1`를 하여 오름차순으로 정렬될 수 있게 하였다.
-- 오차 범위가 10<sup>-2</sup>이기 때문에 출력 부분을 별도로 설정해주어야 한다.
-#### ⌨️ Code
 ```cpp
 #include <bits/stdc++.h>
 
 using namespace std;
 
-int n, parent[100];
-double result = 0;
-vector<pair<double, double>> v;
-priority_queue<tuple<double, int, int>> pq;
+int n, q, fenwickTree[100001];
 
-int find_root(int node) {
-    if ( parent[node] == node ) return node;
-    else return parent[node] = find_root(parent[node]);
+void fenwickTree_Update(int idx, int val) {
+    while ( idx <= n ) {
+        fenwickTree[idx] += val;
+        idx += (idx & -idx);
+    }
 }
 
-void union_root(int n1, int n2) {
-    int n1_root = find_root(n1);
-    int n2_root = find_root(n2);
-    
-    if ( n1_root != n2_root ) parent[n2_root] = n1_root;
-} 
-
-void kruskal() {
-    while ( !pq.empty() ) {
-        double cost;
-        int n1, n2;
-        tie(cost, n1, n2) = pq.top();
-        cost *= -1;
-        pq.pop();
-        
-        if ( find_root(n1) == find_root(n2) ) continue;
-        result += cost;
-        union_root(n1, n2);
+int fenwickTree_Sum(int idx) {
+    int result = 0;
+    while ( idx > 0 ) {
+        result += fenwickTree[idx];
+        idx -= (idx & -idx);
     }
+    return result;
 }
 
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(NULL); cout.tie(NULL);
     
-    cin >> n;
-    for ( int i = 0; i < n; i++ ) {
-        parent[i] = i;
-        double x, y;
-        cin >> x >> y;
-        v.push_back({x, y});
-        for ( int j = 0; j < (int)v.size() -1; j++ ) {
-            double px, py;
-            tie(px, py) = v[j];
-            double cost = sqrt(pow(px-x, 2) + pow(py-y, 2));
-            pq.push({-cost, i, j});
+    cin >> n >> q;
+    while ( q-- ) {
+        int cmd;
+        cin >> cmd;
+        if ( cmd == 1 ) {
+            int l, r, val;
+            cin >> l >> r >> val;
+            fenwickTree_Update(l, val);
+            fenwickTree_Update(r+1, -val);
+        } else if ( cmd == 2 ) {
+            int idx;
+            cin >> idx;
+            cout << fenwickTree_Sum(idx) << '\n';
+        }
+    }
+    return 0;
+}
+```
+##### ❓ 예제 Input
+	8 7
+	1 1 5 10
+	2 5
+	1 2 2 5
+	2 2
+	1 1 8 7
+	2 1
+	2 2
+##### ⭐ 예제 Output
+	10
+	15
+	17
+	22
+# Fenwick Tree 응용문제
+### 📑[8217 - 유성](https://www.acmicpc.net/problem/8217)
+#### 🔓 KeyPoint
+- [[PBS(Parallel Binary Search)]]에 Fenwick Tree을 응용한 문제이다.
+- 구간의 합이 쿼리가 주어질 때 이를 이용하여 각 국가의 할당량이 몇 번째 쿼리가 될 때 채워지는지를 구하면 된다.
+- 각 국가마다 `특정 일(D) 안에 할당량을 채울 수 있는가?`라는 이분 탐색을 병렬로 진행하면 문제를 풀 수 있다.
+- 이분 탐색을 진행하는 과정에서 할당량을 구하기 위해 [[Lazy Segment Tree]]을 사용하게 되면 **시간 초과**기 된다.
+- 시간 초과를 해결하기 위해 Lazy가 아닌 Fenwick Tree를 이용하면 이를 해결할 수 있다.
+- Fenwick 중 구간의 합을 구하기기 때문에 Range Update & Point Query을 이용한다.
+- 구간은 끝이 이어져있는 **원형 형태**이기 때문에 이를 유의하여야 한다.
+#### ⌨️ Code
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int n, m, q, countryQuota[300001];
+long long fenwickTree[300001];
+pair<int,int> queryRange[300001];
+tuple<bool,int,int,long long> query[300001];
+vector<int> countryArea[300001], queryMidValue[300001];
+
+void fenwickTree_Update(int idx, long long val) {
+    while ( idx <= m ) {
+        fenwickTree[idx] += val;
+        idx += (idx & -idx);
+    }
+}
+
+long long fenwickTree_Sum(int idx) {
+    long long result = 0;
+    while ( idx > 0 ) {
+        result += fenwickTree[idx];
+        idx -= (idx & -idx);
+    }
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL); cout.tie(NULL);
+    
+    cin >> n >> m;
+    for ( int i = 1; i <= m; i++ ) {
+        int num;
+        cin >> num;
+        countryArea[num].push_back(i);
+    }
+    
+    for ( int i = 1; i <= n; i++ ) cin >> countryQuota[i];
+    
+    cin >> q;
+    for ( int i = 1; i <= q; i++ ) {
+        int l, r;
+        long long a;
+        bool isLeftBiggerThanRight = false;
+        cin >> l >> r >> a;
+        if ( l > r ) {
+            isLeftBiggerThanRight = true;
+            swap(l, r);
+        }
+        query[i] = {isLeftBiggerThanRight, l, r, a};
+    }
+    
+    for ( int i = 1; i <= n; i++ ) {
+        queryRange[i].first = 1; queryRange[i].second = q + 1;
+    }
+    
+    while ( 1 ) {
+        bool flag = false;
+        memset(fenwickTree, 0, sizeof(fenwickTree));
+        
+        for ( int i = 0; i <= q; i++ ) queryMidValue[i].clear();
+        
+        for ( int i = 1; i <= n; i++ ) {
+            if ( queryRange[i].first < queryRange[i].second ) {
+                flag = true;
+                int mid = (queryRange[i].first + queryRange[i].second) / 2;
+                queryMidValue[mid].push_back(i);
+            }
+        }
+        
+        if ( !flag ) break;
+        
+        for ( int i = 1; i <= q; i++ ) {
+            bool isLeftBiggerThanRight = get<0>(query[i]);
+            int queryL = get<1>(query[i]);
+            int queryR = get<2>(query[i]);
+            long long queryVal = get<3>(query[i]);
+            
+            if ( isLeftBiggerThanRight ) {
+                fenwickTree_Update(1, queryVal);
+                fenwickTree_Update(queryL+1, -queryVal);
+                fenwickTree_Update(queryR, queryVal);
+            } else {
+                fenwickTree_Update(queryL, queryVal);
+                fenwickTree_Update(queryR + 1, -queryVal);
+            }
+            
+            for ( auto nodeIdx : queryMidValue[i] ) {
+                long long result = 0;
+                for ( auto node : countryArea[nodeIdx] ) {
+                    result += fenwickTree_Sum(node);
+                    if ( result >= countryQuota[nodeIdx] ) break;
+                }
+                if ( result >= countryQuota[nodeIdx] ) queryRange[nodeIdx].second = i;
+                else queryRange[nodeIdx].first = i+1;
+            }
         }
     }
     
-    kruskal();
-    cout << fixed;
-    cout.precision(2);
-    cout << result;
+    for ( int i = 1; i <= n; i++ ) {
+        if ( queryRange[i].first == q + 1 ) cout << "NIE\n";
+        else cout << queryRange[i].first << '\n';
+    }
     return 0;
 }
 ```
-### 📑[2887 - 행성 터널](https://www.acmicpc.net/problem/2887)
+### 📑[15957 - 음악추천](https://www.acmicpc.net/problem/15957)
 #### 🔓 KeyPoint
-- 노드들은 각각 x, y, z,의 좌표를 가지고 있으며 이 노드들을 연결하는 Edge의 Cost를 계산하는 방법은 `min(x - x', y - y', z - z')`이다.
-- 각각 노드들을 연결하는 Edge의 Cost를 구해도 되지만, 이럴 경우 계산 양이 많아지게 된다.
-- 노드들의 x, y, z 값들을 오름차순 정렬하고 정렬 기준, 바로 `인접해 있는 노드들의 사이의 거리`만 구하면 된다. 
-- 예를 들어 n1, n2, n3의 x값들이 각각 1, 5, 10이라고 하자. 만약 3개 노드들의 y, z값들의 차이가 커 x값들의 연결 비용이 최소 비용 즉, Edge의 Cost가 된다고 할 때, `n1 - n2를 연결하는 비용(4)과 n2 - n3를 연결하는 비용(5)`이 MST의 비용인 것이다. 인접하지 않는 `n1 - n3의 연결 비용은 9`이기 때문에 n2와 n3 사이의 Edge를 선택해야 하는 것이다. 따라서 인접한 노드들끼리만 비교해도 MST를 구할 수 있다.
-- Priority Queue를 사용해 인접한 노드들의 x, y, z 값을 넣어주고 MST를 구해주면 된다.
+- 마찬가지로 [[PBS(Parallel Binary Search)]]에서 Fenwick Tree를 응용하는 문제이다.
+- 문제의 조건이 매우 많고 복잡하기 때문에 여러 개의 틀로 문제를 나누어 푸는 것이 좋다.
+- 주어지는 값들이 Tree 형태로 주어져있고 해당 Tree에 구간의 합을 적용해야 하기 때문에 [[ETT(Euler Tour Technique)]]을 적용해야 한다.
+- 최종적으로 구하는 것이 **목표점수를 초과하는 시점** 이기 떄문에 각각의 가수들이 `특정 시점(K)에 목표 점수를 넘는가?`를 이분탐색 기준으로 잡고 이분 병렬 탐색을 진행하여야 한다.
+- Fenwick Tree에서 각 Point 값을 sum하는 과정에서 이미 목표 점수를 넘었으면 계산을 더 이상 하지 않고 값을 넘겨야 시간 초과를 방지할 수 있다.
 #### ⌨️ Code
 ```cpp
 #include <bits/stdc++.h>
+#define maxLen 100001
 
 using namespace std;
 
-int n, parent[100001];
-long long result = 0;
-priority_queue<tuple<int, int, int>> pq;
-vector<pair<int,int>> x_Base, y_Base, z_Base;
+int n, k, ettCnt = 0, s[maxLen], e[maxLen], singers[maxLen], subTreeRoot[maxLen];
+long long j, queryWeight[maxLen], fenwickTree[maxLen];
+pair<int,int> queryRange[maxLen];
+vector<int> tree[maxLen], songsBasedSinger[maxLen], queryMidValue[maxLen];
+vector<pair<long long, int>> query;
 
-int find_root(int node) {
-    if ( parent[node] == node ) return parent[node];
-    return parent[node] = find_root(parent[node]);
-}
-
-void union_root(int n1, int n2) {
-    int n1_root = find_root(n1);
-    int n2_root = find_root(n2);
-    
-    if ( n1_root != n2_root ) parent[n2_root] = n1_root;
-}
-
-void kruskal() {
-    
-    while ( !pq.empty() ) {
-        int cost, n1, n2;
-        tie(cost, n1, n2) = pq.top();
-        cost *= -1;
-        pq.pop();
-        
-        if ( find_root(n1) == find_root(n2) ) continue;
-        result += cost;
-        union_root(n1, n2);
+void fenwickTree_Update(int idx, long long val) {
+    while ( idx <= n ) {
+        fenwickTree[idx] += val;
+        idx += (idx & -idx);
     }
+}
+
+long long fenwickTree_Sum(int idx) {
+    long long result = 0;
+    while ( idx > 0 ) {
+        result += fenwickTree[idx];
+        idx -= (idx & -idx);
+    }
+    return result;
+}
+
+void ett(int node) {
+    s[node] = ++ettCnt;
+    for ( auto nNode : tree[node] ) {
+        if ( s[nNode] == 0 ) ett(nNode);
+    }
+    e[node] = ettCnt;
 }
 
 int main() {
     ios_base::sync_with_stdio(false);
-    cin.tie(NULL); cout.tie(NULL);
+    cin.tie(NULL);
     
-    cin >> n;
+    cin >> n >> k >> j;
+    for ( int i = 2; i <= n; i++ ) {
+        int root;
+        cin >> root;
+        tree[root].push_back(i);
+    }
     
-    for ( int i = 1; i <= n; i++ ) parent[i] = i;
+    ett(1);
     
     for ( int i = 1; i <= n; i++ ) {
-        int x, y, z;
-        cin >> x >>  y >> z;
-        x_Base.push_back({x, i});
-        y_Base.push_back({y, i});
-        z_Base.push_back({z, i});
-    }
-    sort(x_Base.begin(), x_Base.end());
-    sort(y_Base.begin(), y_Base.end());
-    sort(z_Base.begin(), z_Base.end());
-    
-    for ( int i = 0; i < n-1; i++ ) {
-        pq.push({-(x_Base[i+1].first - x_Base[i].first), x_Base[i].second, x_Base[i+1].second});
-        pq.push({-(y_Base[i+1].first - y_Base[i].first), y_Base[i].second, y_Base[i+1].second});
-        pq.push({-(z_Base[i+1].first - z_Base[i].first), z_Base[i].second, z_Base[i+1].second});
+        cin >> singers[i];
+        songsBasedSinger[singers[i]].push_back(i);
     }
     
-    kruskal();
+    query.push_back({-1, -1});
+    for ( int i = 1; i <= k; i++ ) {
+        long long dateTime;
+        cin >> dateTime >> subTreeRoot[i] >> queryWeight[i];
+        query.push_back({dateTime, i});
+    }
+    sort(query.begin(), query.end());
     
-    cout << result;
-    return 0;
-}
-```
+    for ( int i = 1; i <= k; i++ ) {
+        queryRange[i].first = ((int)songsBasedSinger[i].size() == 0 ) ? k+1 : 1;
+        queryRange[i].second = k+1;
+    }
+    
+    while ( 1 ) {
+        bool flag = false;
+        for ( int i = 1; i <= k; i++ ) queryMidValue[i].clear();
+        memset(fenwickTree, 0, sizeof(fenwickTree));
+        
+        for ( int i = 1; i <= k; i++ ) {
+            int l = queryRange[i].first, r = queryRange[i].second;
+            if ( l < r ) {
+                flag = true;
+                int mid = (l + r) / 2;
+                queryMidValue[mid].push_back(i);
+            }
+        }
+        
+        if ( !flag ) break;
+        
+        for ( int i = 1; i <= k; i++ ) {
+            int queryIdx = query[i].second;
+            int root = subTreeRoot[queryIdx];
+            long long weight = queryWeight[queryIdx];
+            
+            long long avgWeight = weight / (e[root] - s[root] + 1);
+            fenwickTree_Update(s[root], avgWeight);
+            fenwickTree_Update(e[root] + 1, -avgWeight);
+            
+            for ( auto singerIdx : queryMidValue[i] ) {
+                long long result = 0;
+                int songsCnt = (int)songsBasedSinger[singerIdx].size();
+                for ( auto song : songsBasedSinger[singerIdx] ) {
+                    result += fenwickTree_Sum(s[song]);
+                    if ( result > j * songsCnt ) break;
+                }
+                if ( result > j * songsCnt ) queryRange[singerIdx].second = i;
