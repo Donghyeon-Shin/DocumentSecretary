@@ -1,4 +1,5 @@
 import os
+import time
 import json
 import streamlit as st
 from modules.crewModules import Crews
@@ -286,22 +287,32 @@ def get_quiz_json(filePath, difficulty, openAI_API_KEY, change_value):
     return filterQuestions
 
 
+## Message
+
+def stream_data(content):
+    for word in content.split(" "):
+        yield word + " "
+        time.sleep(0.01)
+
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
 
 def paint_history():
     for message in st.session_state["messages"]:
-        send_message(message["message"], message["role"], False)
+        send_message(message["message"], message["role"], False, False)
 
 
 def save_message(message, role):
     st.session_state["messages"].append({"message": message, "role": role})
 
 
-def send_message(message, role, save=True):
+def send_message(message, role, save=True, streaming = True):
     with st.chat_message(role):
-        st.markdown(message)
+        if streaming:
+            st.write_stream(stream_data(message))
+        else:
+            st.write(message)
         if save:
             save_message(message, role)
 
