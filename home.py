@@ -197,7 +197,6 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                             "지정된 경로에 있는 모든 이미지 파일을 불러오고 있습니다..."
                         ):
                             imgPathCrewResult = get_imgPath(file, openAI_API_KEY)
-                        st.write("모든 이미지를 불러왔습니다.")
                         if imgPathCrewResult == "Error":
                             status.update(
                                 label="파일을 불러오는데 오류가 발생했습니다.",
@@ -206,8 +205,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                             )
                         else:
                             isSuccessLoadImagPath = True
-                            st.write("모든 파일을 불러왔습니다.")
-
+                            st.write("모든 이미지를 불러왔습니다.")
                     if isSuccessLoadImagPath:
                         # 키워드에 맞는 관련 파일 찾기
                         with st.spinner(
@@ -227,7 +225,6 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                                 st.session_state["searchAllFilePaths"]["imgPaths"],
                                 openAI_API_KEY,
                             )
-                        st.write("키워드에 맞는 파일들을 모두 찾았습니다.")
                         if fileSelectCrewResult == "Error":
                             status.update(
                                 label="파일을 불러오는데 오류가 발생했습니다.",
@@ -235,6 +232,7 @@ if st.session_state["isSuccessFile"] and openAI_API_KEY.startswith("sk-"):
                                 state="error",
                             )
                         else:
+                            st.write("키워드에 맞는 파일들을 모두 찾았습니다.")
                             isSuccessSelectFile = True
                             st.session_state["isLoadFile"] = True
                             st.session_state["mainFilePath"] = ""
